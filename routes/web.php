@@ -1,75 +1,48 @@
 <?php
 
-// Mengimpor Facade Route dari framework Laravel untuk mendefinisikan rute URL
-use App\Http\Controllers\Admin\DashboardController;
-// Mengimpor OrderController untuk menangani rute halaman pelanggan
-use App\Http\Controllers\Admin\OrderAdminController;
-// Mengimpor AuthController untuk menangani rute login dan logout admin
-use App\Http\Controllers\Admin\ServiceController;
-// Mengimpor DashboardController untuk panel ringkasan admin
-use App\Http\Controllers\AuthController;
-// Mengimpor ServiceController untuk CRUD master tarif & layanan
 use App\Http\Controllers\OrderController;
-// Mengimpor OrderAdminController untuk pengelolaan transaksi dan update progres cuci
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| RUTE SISTEM PENDAFTARAN LAYANAN LAUNDRY
-| Bergaya Human Junior Developer dengan penjelasan rinci pada tiap baris
+| Web Routes - Sistem Pendaftaran Layanan Laundry Express
 |--------------------------------------------------------------------------
 */
 
 // ==========================================
-// 1. RUTE PUBLIK / SISI PELANGGAN (CUSTOMER)
+// 1. RUTE SISI PELANGGAN (PUBLIC / USER)
 // ==========================================
-
-// Rute beranda: menampilkan katalog layanan, form pendaftaran pemesanan, dan tracking status
-Route::get('/', [OrderController::class, 'index'])->name('home');
-
-// Rute POST: memproses pengiriman data form pendaftaran pesanan laundry
-Route::post('/pesan', [OrderController::class, 'store'])->name('orders.store');
-
-// Rute GET: menampilkan nota bukti transaksi pesanan beserta link WhatsApp dan tombol cetak struk
-Route::get('/nota/{order}', [OrderController::class, 'show'])->name('orders.show');
+// Halaman Form Pemesanan Laundry
+Route::get('/', [OrderController::class, 'create'])->name('order.create');
+// Proses Submit Transaksi Pemesanan
+Route::post('/order', [OrderController::class, 'store'])->name('order.store');
+// Halaman Bukti / Nota Pendaftaran Pesanan
+Route::get('/order/{order}/success', [OrderController::class, 'success'])->name('order.success');
 
 // ==========================================
-// 2. RUTE AUTENTIKASI ADMIN
+// 2. RUTE SISI ADMIN (TERPROTEKSI AUTH BREEZE)
 // ==========================================
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Halaman Dashboard Tersendiri: Rekap Pesanan & Progres Cuci
+    Route::get('/dashboard', [OrderController::class, 'dashboard'])->name('dashboard');
+    Route::patch('/admin/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.updateStatus');
+    Route::delete('/admin/orders/{order}', [OrderController::class, 'destroy'])->name('admin.orders.destroy');
 
-// Rute GET: menampilkan formulir halaman login admin
-Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
+    // Halaman CRUD Master Layanan Tersendiri:
+    // - GET  /services          -> Index (Daftar Layanan)
+    // - GET  /services/create   -> Create (Halaman Tambah Tersendiri)
+    // - POST /services          -> Store (Simpan)
+    // - GET  /services/{id}/edit-> Edit (Halaman Edit Tersendiri)
+    // - PUT  /services/{id}     -> Update (Perbarui)
+    // - DELETE /services/{id}   -> Destroy (Hapus)
+    Route::resource('services', ServiceController::class);
 
-// Rute POST: memproses data username dan password untuk autentikasi login
-Route::post('/login', [AuthController::class, 'login'])->name('login.process');
-
-// Rute POST: memproses logout admin dan menghapus sesi
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-// ==========================================
-// 3. RUTE KHUSUS PANEL ADMINISTRATOR
-// Dilindungi middleware 'auth' agar hanya admin yang sudah login yang dapat mengakses
-// ==========================================
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-
-    // Rute Dashboard ringkasan indikator transaksi dan status
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-
-    // --- Rute CRUD Master Layanan (Tarif & Paket Cuci) ---
-    // Menampilkan daftar master paket layanan
-    Route::get('/layanan', [ServiceController::class, 'index'])->name('services.index');
-    // Menyimpan paket layanan baru
-    Route::post('/layanan', [ServiceController::class, 'store'])->name('services.store');
-    // Memperbarui data paket layanan
-    Route::put('/layanan/{service}', [ServiceController::class, 'update'])->name('services.update');
-    // Menghapus paket layanan
-    Route::delete('/layanan/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
-
-    // --- Rute Pengelolaan Pesanan & Update Status Cuci ---
-    // Menampilkan daftar seluruh transaksi cucian dan filter status
-    Route::get('/pesanan', [OrderAdminController::class, 'index'])->name('orders.index');
-    // Memperbarui status progres pengerjaan cuci ('Antrean' -> 'Dicuci' -> 'Selesai')
-    Route::patch('/pesanan/{order}/status', [OrderAdminController::class, 'updateStatus'])->name('orders.updateStatus');
-    // Menghapus data transaksi pesanan
-    Route::delete('/pesanan/{order}', [OrderAdminController::class, 'destroy'])->name('orders.destroy');
+    // Profile Admin (Breeze)
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+require __DIR__.'/auth.php';

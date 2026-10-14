@@ -25,103 +25,55 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Membuat akun login Administrator (username: admin, password: admin123)
-        User::firstOrCreate(
-            ['username' => 'admin'],
+        // 1. Akun Admin Default untuk Login
+        User::updateOrCreate(
+            ['email' => 'admin@laundry.com'],
             [
-                'name' => 'Administrator Laundry Express',
-                'email' => 'admin@laundry.com',
-                'password' => Hash::make('admin123'),
+                'name'     => 'Admin Laundry Express',
+                'username' => 'admin',
+                'password' => Hash::make('password123'),
             ]
         );
 
-        // 2. Daftar paket layanan awal sesuai skenario modul (Kiloan, Satuan, Express)
-        $layananAwal = [
-            [
-                'service_name' => 'Cuci Komplit Reguler (Cuci + Setrika + Lipat)',
-                'category' => 'Kiloan',
-                'price_per_unit' => 7000,
-                'unit_type' => 'Kg',
-                'description' => 'Layanan cuci bersih wangi dan disetrika rapi, selesai dalam 2-3 hari kerja.',
-            ],
-            [
-                'service_name' => 'Cuci Kering Lipat Cepat',
-                'category' => 'Kiloan',
-                'price_per_unit' => 5000,
-                'unit_type' => 'Kg',
-                'description' => 'Layanan cuci bersih dan dikeringkan rapi tanpa disetrika, selesai 1-2 hari.',
-            ],
-            [
-                'service_name' => 'Cuci Kilat Express (3 Jam Selesai)',
-                'category' => 'Express',
-                'price_per_unit' => 15000,
-                'unit_type' => 'Kg',
-                'description' => 'Prioritas cuci kilat khusus untuk kebutuhan mendesak, selesai dalam hitungan 3 jam.',
-            ],
-            [
-                'service_name' => 'Bed Cover Besar / King Size',
-                'category' => 'Satuan',
-                'price_per_unit' => 25000,
-                'unit_type' => 'Pcs',
-                'description' => 'Pembersihan mendalam untuk bed cover ukuran besar agar bebas debu dan tungau.',
-            ],
-            [
-                'service_name' => 'Jas / Blazer Dry Cleaning',
-                'category' => 'Satuan',
-                'price_per_unit' => 35000,
-                'unit_type' => 'Pcs',
-                'description' => 'Perawatan khusus pakaian berbahan halus/jas formal menggunakan metode dry clean.',
-            ],
-            [
-                'service_name' => 'Selimut Tebal Bulu Halus',
-                'category' => 'Satuan',
-                'price_per_unit' => 20000,
-                'unit_type' => 'Pcs',
-                'description' => 'Pencucian selimut tebal dengan pelembut premium menjaga kelembutan kain.',
-            ],
-        ];
+        // 2. Data Master Layanan
+        $this->call(ServiceSeeder::class);
 
-        // Melakukan perulangan untuk memasukkan seluruh master layanan ke tabel services
-        foreach ($layananAwal as $srv) {
-            Service::firstOrCreate(
-                ['service_name' => $srv['service_name']],
-                $srv
-            );
-        }
-
-        // 3. Menambahkan contoh transaksi pesanan awal jika tabel masih kosong
+        // 3. Contoh Transaksi Awal untuk Bahan Belajar & Pengujian
         if (Order::count() === 0) {
-            // Membuat pesanan contoh 1
-            $order1 = Order::create([
-                'customer_name' => 'Siti Rahmawati',
-                'whatsapp_number' => '081234567890',
-                'total_price' => 49000,
-                'status' => 'Dicuci',
-            ]);
+            $service1 = Service::where('category', 'Kiloan')->first();
+            $service2 = Service::where('category', 'Express')->first();
 
-            // Menambahkan detail pesanan 1
-            OrderDetail::create([
-                'order_id' => $order1->id,
-                'service_id' => 1,
-                'qty_or_weight' => 7,
-                'subtotal' => 49000,
-            ]);
+            if ($service1) {
+                $order1 = Order::create([
+                    'customer_name'   => 'Siti Rahmawati',
+                    'whatsapp_number' => '081234567890',
+                    'total_price'     => $service1->price_per_unit * 5,
+                    'status'          => 'Dicuci',
+                ]);
 
-            // Membuat pesanan contoh 2
-            $order2 = Order::create([
-                'customer_name' => 'Budi Santoso',
-                'whatsapp_number' => '089876543210',
-                'total_price' => 30000,
-                'status' => 'Antrean',
-            ]);
+                OrderDetail::create([
+                    'order_id'      => $order1->id,
+                    'service_id'    => $service1->id,
+                    'qty_or_weight' => 5,
+                    'subtotal'      => $service1->price_per_unit * 5,
+                ]);
+            }
 
-            // Menambahkan detail pesanan 2
-            OrderDetail::create([
-                'order_id' => $order2->id,
-                'service_id' => 3,
-                'qty_or_weight' => 2,
-                'subtotal' => 30000,
-            ]);
+            if ($service2) {
+                $order2 = Order::create([
+                    'customer_name'   => 'Budi Santoso',
+                    'whatsapp_number' => '089876543210',
+                    'total_price'     => $service2->price_per_unit * 3,
+                    'status'          => 'Antrean',
+                ]);
+
+                OrderDetail::create([
+                    'order_id'      => $order2->id,
+                    'service_id'    => $service2->id,
+                    'qty_or_weight' => 3,
+                    'subtotal'      => $service2->price_per_unit * 3,
+                ]);
+            }
         }
     }
 }

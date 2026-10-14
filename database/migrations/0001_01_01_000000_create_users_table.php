@@ -21,8 +21,8 @@ return new class extends Migration
             $table->id();
             // Kolom nama lengkap user/admin
             $table->string('name');
-            // Kolom username unik untuk login admin (gaya praktis developer junior)
-            $table->string('username')->unique();
+            // Kolom username untuk login admin (dibuat nullable agar form register standar Breeze tetap lancar)
+            $table->string('username')->nullable()->unique();
             // Kolom alamat email user yang bersifat unik
             $table->string('email')->unique();
             // Kolom waktu verifikasi email, boleh null jika belum diverifikasi
