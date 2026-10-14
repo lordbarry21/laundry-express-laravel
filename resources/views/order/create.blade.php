@@ -3,174 +3,151 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Pendaftaran Layanan Laundry / Cuci Kilat</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #ffffff;
-            color: #000000;
-            margin: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid #000000;
-        }
-        th {
-            background-color: #dddddd;
-            text-align: left;
-            padding: 6px;
-        }
-        td {
-            padding: 6px;
-        }
-        input, select, button {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            padding: 4px;
-            box-sizing: border-box;
-        }
-        input[type="text"], input[type="tel"], input[type="number"], select {
-            width: 100%;
-            border: 1px solid #000000;
-        }
-        button {
-            padding: 6px 14px;
-            background-color: #eeeeee;
-            border: 1px solid #000000;
-            cursor: pointer;
-        }
-        .form-table td {
-            border: none;
-            padding: 5px;
-        }
-        .form-table {
-            border: 1px solid #000000;
-            max-width: 600px;
-            background-color: #fafafa;
-        }
-        .error-box {
-            border: 1px solid red;
-            background-color: #ffe6e6;
-            color: red;
-            padding: 8px;
-            margin-bottom: 15px;
-        }
-    </style>
+    <title>Pendaftaran Layanan Laundry Express</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body class="bg-gray-100 text-gray-900 font-sans antialiased">
 
-    <h1>Sistem Pendaftaran Layanan Laundry / Cuci Kilat</h1>
-    <hr>
-
-    @if (session('error'))
-        <div class="error-box">
-            <b>Error:</b> {{ session('error') }}
+    <!-- HEADER SEDERHANA -->
+    <header class="bg-white border-b border-gray-200 py-4 px-6 mb-6">
+        <div class="max-w-5xl mx-auto">
+            <h1 class="text-xl font-bold text-gray-800">Sistem Pendaftaran Layanan Laundry Express</h1>
+            <p class="text-xs text-gray-500">Pemesanan jasa cuci kiloan, satuan, dan paket express</p>
         </div>
-    @endif
+    </header>
 
-    @if ($errors->any())
-        <div class="error-box">
-            <b>Periksa kembali isian:</b>
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+    <div class="max-w-5xl mx-auto px-4 pb-12 space-y-6">
+
+        @if (session('error'))
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                <b>Pemberitahuan:</b> {{ session('error') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                <b class="block mb-1">Silakan periksa inputan berikut:</b>
+                <ul class="list-disc list-inside text-xs space-y-0.5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+
+            <!-- FORM PENDAFTARAN (KIRI) -->
+            <div class="md:col-span-7 bg-white border border-gray-200 rounded-lg p-5">
+                <h2 class="text-base font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4">
+                    Form Pendaftaran Pesanan
+                </h2>
+
+                <form action="{{ route('order.store') }}" method="POST" class="space-y-4">
+                    @csrf
+
+                    <div>
+                        <label for="customer_name" class="block text-xs font-semibold text-gray-700 uppercase mb-1">
+                            Nama Pelanggan
+                        </label>
+                        <input type="text" name="customer_name" id="customer_name" value="{{ old('customer_name') }}"
+                            class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md text-sm"
+                            placeholder="Contoh: Budi Santoso" required autofocus>
+                    </div>
+
+                    <div>
+                        <label for="whatsapp_number" class="block text-xs font-semibold text-gray-700 uppercase mb-1">
+                            Nomor WhatsApp
+                        </label>
+                        <input type="text" name="whatsapp_number" id="whatsapp_number" value="{{ old('whatsapp_number') }}"
+                            class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md text-sm font-mono"
+                            placeholder="08xxxxxxxxxx" required>
+                    </div>
+
+                    <div>
+                        <label for="service_id" class="block text-xs font-semibold text-gray-700 uppercase mb-1">
+                            Pilih Paket Layanan
+                        </label>
+                        <select name="service_id" id="service_id"
+                            class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md text-sm" required>
+                            <option value="">-- Pilih Paket Cuci --</option>
+                            @foreach ($services as $srv)
+                                <option value="{{ $srv->id }}"
+                                    data-price="{{ $srv->price_per_unit }}"
+                                    data-unit="{{ $srv->unit_type }}"
+                                    {{ old('service_id') == $srv->id ? 'selected' : '' }}>
+                                    [{{ $srv->category }}] {{ $srv->service_name }} - Rp {{ number_format($srv->price_per_unit, 0, ',', '.') }} / {{ $srv->unit_type }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="qty_or_weight" class="block text-xs font-semibold text-gray-700 uppercase">
+                                Perkiraan Berat / Jumlah
+                            </label>
+                            <span id="unit-text" class="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-medium border border-indigo-100">
+                                Satuan: Kg / Pcs
+                            </span>
+                        </div>
+                        <input type="number" name="qty_or_weight" id="qty_or_weight" min="1" value="{{ old('qty_or_weight', 1) }}"
+                            class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md text-sm" required>
+                    </div>
+
+                    <!-- ESTIMASI TOTAL BIAYA -->
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-md p-3 flex justify-between items-center">
+                        <span class="text-xs font-semibold text-indigo-900 uppercase">Estimasi Total Biaya:</span>
+                        <span id="total-text" class="text-lg font-bold text-indigo-600">Rp 0</span>
+                    </div>
+
+                    <div>
+                        <button type="submit"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-md text-sm transition">
+                            Kirim Pendaftaran Pesanan
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- DAFTAR TARIF LAYANAN (KANAN) -->
+            <div class="md:col-span-5 bg-white border border-gray-200 rounded-lg p-5">
+                <h2 class="text-base font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4">
+                    Daftar Paket Layanan & Tarif
+                </h2>
+
+                <div class="space-y-3">
+                    @forelse ($services as $srv)
+                        <div class="border border-gray-200 rounded-md p-3 text-sm">
+                            <div class="flex justify-between items-start gap-2 mb-1">
+                                <div class="font-semibold text-gray-900">{{ $srv->service_name }}</div>
+                                <span class="text-xs font-bold text-gray-900 whitespace-nowrap">
+                                    Rp {{ number_format($srv->price_per_unit, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs">
+                                @if ($srv->category === 'Kiloan')
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium text-[11px] border border-blue-200">Kiloan</span>
+                                @elseif ($srv->category === 'Express')
+                                    <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium text-[11px] border border-amber-200">Express</span>
+                                @else
+                                    <span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-medium text-[11px] border border-purple-200">Satuan</span>
+                                @endif
+                                <span class="text-gray-500">per {{ $srv->unit_type }}</span>
+                            </div>
+                            @if ($srv->description)
+                                <p class="text-xs text-gray-600 mt-2">{{ $srv->description }}</p>
+                            @endif
+                        </div>
+                    @empty
+                        <p class="text-xs text-gray-500 text-center py-4">Belum ada paket layanan.</p>
+                    @endforelse
+                </div>
+            </div>
+
         </div>
-    @endif
 
-    <h2>Form Pendaftaran Pesanan</h2>
-
-    <form action="{{ route('order.store') }}" method="POST">
-        @csrf
-        <table class="form-table" cellpadding="4" cellspacing="0">
-            <tr>
-                <td style="width: 200px;"><b>Nama Pelanggan:</b></td>
-                <td>
-                    <input type="text" name="customer_name" value="{{ old('customer_name') }}" required>
-                </td>
-            </tr>
-            <tr>
-                <td><b>Nomor WhatsApp:</b></td>
-                <td>
-                    <input type="text" name="whatsapp_number" value="{{ old('whatsapp_number') }}" required>
-                </td>
-            </tr>
-            <tr>
-                <td><b>Pilih Layanan:</b></td>
-                <td>
-                    <select name="service_id" id="service_id" required>
-                        <option value="">-- Pilih Paket Cuci --</option>
-                        @foreach ($services as $srv)
-                            <option value="{{ $srv->id }}"
-                                data-price="{{ $srv->price_per_unit }}"
-                                data-unit="{{ $srv->unit_type }}"
-                                {{ old('service_id') == $srv->id ? 'selected' : '' }}>
-                                {{ $srv->service_name }} ({{ $srv->category }}) - Rp {{ number_format($srv->price_per_unit, 0, ',', '.') }} / {{ $srv->unit_type }}
-                            </option>
-                        @endforeach
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td><b>Perkiraan Berat / Jumlah:</b></td>
-                <td>
-                    <input type="number" name="qty_or_weight" id="qty_or_weight" min="1" value="{{ old('qty_or_weight', 1) }}" required>
-                    <span id="unit-text" style="font-size: 12px; color: #333;">(Satuan: Kg / Pcs)</span>
-                </td>
-            </tr>
-            <tr>
-                <td><b>Estimasi Total Biaya:</b></td>
-                <td>
-                    <b id="total-text" style="font-size: 16px;">Rp 0</b>
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>
-                    <button type="submit">Kirim Pemesanan</button>
-                </td>
-            </tr>
-        </table>
-    </form>
-
-    <br>
-    <hr>
-
-    <h2>Daftar Paket Layanan & Tarif</h2>
-
-    <table border="1" cellpadding="6" cellspacing="0">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Nama Layanan</th>
-                <th>Kategori</th>
-                <th>Tarif / Harga</th>
-                <th>Satuan</th>
-                <th>Keterangan</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($services as $key => $srv)
-                <tr>
-                    <td style="text-align: center;">{{ $key + 1 }}</td>
-                    <td><b>{{ $srv->service_name }}</b></td>
-                    <td>{{ $srv->category }}</td>
-                    <td>Rp {{ number_format($srv->price_per_unit, 0, ',', '.') }}</td>
-                    <td>Per {{ $srv->unit_type }}</td>
-                    <td>{{ $srv->description ?: '-' }}</td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" style="text-align: center;">Tidak ada data layanan.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+    </div>
 
     <script>
         const serviceSelect = document.getElementById('service_id');
@@ -182,13 +159,13 @@
             const opt = serviceSelect.options[serviceSelect.selectedIndex];
             if (!opt || !opt.value) {
                 totalText.textContent = 'Rp 0';
-                unitText.textContent = '(Satuan: Kg / Pcs)';
+                unitText.textContent = 'Satuan: -';
                 return;
             }
             const price = parseInt(opt.getAttribute('data-price')) || 0;
             const unit = opt.getAttribute('data-unit') || '';
             const qty = parseInt(qtyInput.value) || 0;
-            unitText.textContent = '(Satuan: ' + unit + ')';
+            unitText.textContent = 'Satuan: ' + unit;
             totalText.textContent = 'Rp ' + (price * qty).toLocaleString('id-ID');
         }
 

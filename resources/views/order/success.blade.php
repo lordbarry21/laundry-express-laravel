@@ -4,124 +4,95 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nota Pemesanan #{{ $order->id }}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #ffffff;
-            color: #000000;
-            margin: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        table, th, td {
-            border: 1px solid #000000;
-        }
-        th {
-            background-color: #dddddd;
-            text-align: left;
-            padding: 6px;
-        }
-        td {
-            padding: 6px;
-        }
-        button, a.btn {
-            font-family: Arial, sans-serif;
-            font-size: 13px;
-            padding: 5px 12px;
-            background-color: #eeeeee;
-            border: 1px solid #000000;
-            color: #000000;
-            text-decoration: none;
-            display: inline-block;
-            cursor: pointer;
-        }
-        .info-table td {
-            border: none;
-            padding: 4px;
-        }
-        .info-table {
-            border: 1px solid #000000;
-            max-width: 500px;
-            margin-bottom: 20px;
-            background-color: #fafafa;
-        }
-        @media print {
-            .no-print {
-                display: none;
-            }
-        }
-    </style>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body class="bg-gray-100 text-gray-900 font-sans antialiased py-8 px-4">
 
-    <h1>Nota Pendaftaran Layanan Laundry</h1>
-    <hr>
+    <div class="max-w-xl mx-auto space-y-4">
 
-    <div class="no-print" style="margin-bottom: 15px;">
-        <a href="{{ route('order.create') }}" class="btn">&laquo; Buat Pesanan Baru</a>
-        <button onclick="window.print()">Cetak Nota</button>
+        <div class="flex justify-between items-center print:hidden">
+            <a href="{{ route('order.create') }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                &larr; Buat Pesanan Baru
+            </a>
+            <button onclick="window.print()" class="bg-gray-800 hover:bg-gray-700 text-white text-xs font-semibold py-1.5 px-3 rounded">
+                Cetak Nota
+            </button>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
+            <div class="flex justify-between items-start border-b border-gray-100 pb-4">
+                <div>
+                    <h1 class="text-lg font-bold text-gray-900">Nota Pendaftaran Laundry</h1>
+                    <p class="text-xs text-gray-500">Laundry Express &bull; No. Order: #{{ $order->id }}</p>
+                </div>
+                <div>
+                    @if ($order->status === 'Antrean')
+                        <span class="bg-yellow-100 text-yellow-800 border border-yellow-300 px-2.5 py-1 rounded text-xs font-bold">
+                            Antrean
+                        </span>
+                    @elseif ($order->status === 'Dicuci')
+                        <span class="bg-blue-100 text-blue-800 border border-blue-300 px-2.5 py-1 rounded text-xs font-bold">
+                            Dicuci
+                        </span>
+                    @else
+                        <span class="bg-green-100 text-green-800 border border-green-300 px-2.5 py-1 rounded text-xs font-bold">
+                            Selesai
+                        </span>
+                    @endif
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                    <span class="text-gray-500 uppercase font-semibold block">Pelanggan:</span>
+                    <span class="font-bold text-gray-900 text-sm block">{{ $order->customer_name }}</span>
+                    <span class="font-mono text-gray-600">WA: {{ $order->whatsapp_number }}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-gray-500 uppercase font-semibold block">Waktu Transaksi:</span>
+                    <span class="font-medium text-gray-800 block">{{ $order->created_at->format('d/m/Y') }}</span>
+                    <span class="text-gray-500">{{ $order->created_at->format('H:i') }} WIB</span>
+                </div>
+            </div>
+
+            <div>
+                <table class="w-full border border-gray-200 rounded-md text-xs">
+                    <thead class="bg-gray-50 border-b border-gray-200 text-gray-700">
+                        <tr>
+                            <th class="p-2 text-left">Layanan</th>
+                            <th class="p-2 text-center">Tarif</th>
+                            <th class="p-2 text-center">Jumlah / Berat</th>
+                            <th class="p-2 text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach ($order->orderDetails as $detail)
+                            <tr>
+                                <td class="p-2">
+                                    <div class="font-semibold text-gray-900">{{ $detail->service->service_name ?? 'Layanan' }}</div>
+                                    <span class="text-[10px] text-gray-500">{{ $detail->service->category ?? '-' }}</span>
+                                </td>
+                                <td class="p-2 text-center">Rp {{ number_format($detail->service->price_per_unit ?? 0, 0, ',', '.') }}</td>
+                                <td class="p-2 text-center font-medium">{{ $detail->qty_or_weight }} {{ $detail->service->unit_type ?? 'Unit' }}</td>
+                                <td class="p-2 text-right font-semibold">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="bg-gray-50 border-t border-gray-200">
+                        <tr>
+                            <td colspan="3" class="p-2 text-right font-bold text-gray-700">Total Biaya:</td>
+                            <td class="p-2 text-right font-bold text-indigo-600 text-sm">Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <p class="text-xs text-gray-500 italic">
+                * Simpan nota ini sebagai bukti saat penyerahan dan pengambilan pakaian cucian.
+            </p>
+        </div>
+
     </div>
-
-    <table class="info-table" cellpadding="4" cellspacing="0">
-        <tr>
-            <td style="width: 150px;"><b>No. Pesanan:</b></td>
-            <td>#{{ $order->id }}</td>
-        </tr>
-        <tr>
-            <td><b>Status Pengerjaan:</b></td>
-            <td><b>[{{ $order->status }}]</b></td>
-        </tr>
-        <tr>
-            <td><b>Nama Pelanggan:</b></td>
-            <td>{{ $order->customer_name }}</td>
-        </tr>
-        <tr>
-            <td><b>Nomor WhatsApp:</b></td>
-            <td>{{ $order->whatsapp_number }}</td>
-        </tr>
-        <tr>
-            <td><b>Waktu Transaksi:</b></td>
-            <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
-        </tr>
-    </table>
-
-    <h3>Rincian Layanan</h3>
-
-    <table border="1" cellpadding="6" cellspacing="0">
-        <thead>
-            <tr>
-                <th>Layanan</th>
-                <th>Kategori</th>
-                <th>Tarif Satuan</th>
-                <th>Jumlah / Berat</th>
-                <th>Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($order->orderDetails as $detail)
-                <tr>
-                    <td>{{ $detail->service->service_name ?? 'Layanan' }}</td>
-                    <td>{{ $detail->service->category ?? '-' }}</td>
-                    <td>Rp {{ number_format($detail->service->price_per_unit ?? 0, 0, ',', '.') }}</td>
-                    <td>{{ $detail->qty_or_weight }} {{ $detail->service->unit_type ?? 'Unit' }}</td>
-                    <td>Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="4" style="text-align: right; font-weight: bold;">Total Biaya:</td>
-                <td style="font-weight: bold; font-size: 16px;">Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
-            </tr>
-        </tfoot>
-    </table>
-
-    <p style="font-size: 13px;">
-        <i>Catatan: Silakan simpan nomor pesanan ini untuk konfirmasi saat penyerahan pakaian.</i>
-    </p>
 
 </body>
 </html>
