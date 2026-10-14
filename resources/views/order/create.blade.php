@@ -6,17 +6,9 @@
     <title>Pendaftaran Layanan Laundry Express</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-100 text-gray-900 font-sans antialiased">
+<body class="bg-gray-100 text-gray-900 font-sans antialiased py-8">
 
-    <!-- HEADER SEDERHANA -->
-    <header class="bg-white border-b border-gray-200 py-4 px-6 mb-6">
-        <div class="max-w-5xl mx-auto">
-            <h1 class="text-xl font-bold text-gray-800">Sistem Pendaftaran Layanan Laundry Express</h1>
-            <p class="text-xs text-gray-500">Pemesanan jasa cuci kiloan, satuan, dan paket express</p>
-        </div>
-    </header>
-
-    <div class="max-w-5xl mx-auto px-4 pb-12 space-y-6">
+    <div class="max-w-6xl mx-auto px-4 space-y-6">
 
         @if (session('error'))
             <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
@@ -35,10 +27,10 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-            <!-- FORM PENDAFTARAN (KIRI) -->
-            <div class="md:col-span-7 bg-white border border-gray-200 rounded-lg p-5">
+            <!-- 1. FORM PENDAFTARAN (KIRI) -->
+            <div class="lg:col-span-5 bg-white border border-gray-200 rounded-lg p-5">
                 <h2 class="text-base font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4">
                     Form Pendaftaran Pesanan
                 </h2>
@@ -110,38 +102,52 @@
                 </form>
             </div>
 
-            <!-- DAFTAR TARIF LAYANAN (KANAN) -->
-            <div class="md:col-span-5 bg-white border border-gray-200 rounded-lg p-5">
+            <!-- 2. DAFTAR TARIF LAYANAN (KANAN: TABEL) -->
+            <div class="lg:col-span-7 bg-white border border-gray-200 rounded-lg p-5">
                 <h2 class="text-base font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4">
                     Daftar Paket Layanan & Tarif
                 </h2>
 
-                <div class="space-y-3">
-                    @forelse ($services as $srv)
-                        <div class="border border-gray-200 rounded-md p-3 text-sm">
-                            <div class="flex justify-between items-start gap-2 mb-1">
-                                <div class="font-semibold text-gray-900">{{ $srv->service_name }}</div>
-                                <span class="text-xs font-bold text-gray-900 whitespace-nowrap">
-                                    Rp {{ number_format($srv->price_per_unit, 0, ',', '.') }}
-                                </span>
-                            </div>
-                            <div class="flex items-center gap-2 text-xs">
-                                @if ($srv->category === 'Kiloan')
-                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium text-[11px] border border-blue-200">Kiloan</span>
-                                @elseif ($srv->category === 'Express')
-                                    <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium text-[11px] border border-amber-200">Express</span>
-                                @else
-                                    <span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-medium text-[11px] border border-purple-200">Satuan</span>
-                                @endif
-                                <span class="text-gray-500">per {{ $srv->unit_type }}</span>
-                            </div>
-                            @if ($srv->description)
-                                <p class="text-xs text-gray-600 mt-2">{{ $srv->description }}</p>
-                            @endif
-                        </div>
-                    @empty
-                        <p class="text-xs text-gray-500 text-center py-4">Belum ada paket layanan.</p>
-                    @endforelse
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left border border-gray-200 rounded-md">
+                        <thead class="bg-gray-50 border-b border-gray-200 text-gray-700 uppercase font-semibold">
+                            <tr>
+                                <th class="p-2.5">Nama Layanan</th>
+                                <th class="p-2.5">Kategori</th>
+                                <th class="p-2.5">Tarif</th>
+                                <th class="p-2.5">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse ($services as $srv)
+                                <tr>
+                                    <td class="p-2.5 font-semibold text-gray-900">
+                                        {{ $srv->service_name }}
+                                    </td>
+                                    <td class="p-2.5 whitespace-nowrap">
+                                        @if ($srv->category === 'Kiloan')
+                                            <span class="bg-blue-100 text-blue-800 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-medium">Kiloan</span>
+                                        @elseif ($srv->category === 'Express')
+                                            <span class="bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded text-[10px] font-medium">Express</span>
+                                        @else
+                                            <span class="bg-purple-100 text-purple-800 border border-purple-200 px-1.5 py-0.5 rounded text-[10px] font-medium">Satuan</span>
+                                        @endif
+                                    </td>
+                                    <td class="p-2.5 whitespace-nowrap font-bold text-gray-900">
+                                        Rp {{ number_format($srv->price_per_unit, 0, ',', '.') }}
+                                        <span class="text-gray-500 font-normal text-[11px]">/ {{ $srv->unit_type }}</span>
+                                    </td>
+                                    <td class="p-2.5 text-gray-600 text-[11px] leading-relaxed">
+                                        {{ $srv->description ?: '-' }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="p-3 text-center text-gray-500">Belum ada paket layanan.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
