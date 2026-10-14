@@ -789,11 +789,12 @@ require __DIR__.'/auth.php';
 
 ## 8. Fase 7: Antarmuka Blade (UI Bawaan Laravel yang Terpisah Per Halaman & Desain Fungsional Sederhana)
 
-Antarmuka dirancang murni fungsional berbasis elemen HTML standar (gaya klasik 90-an yang simpel dan tegas):
-- Menggunakan tabel HTML standar (`border="1"`), form tabel sederhana, dan tombol default.
-- **Tanpa cross-navigation:** Sisi pelanggan tidak memiliki tombol/link menuju admin login, dan sisi admin tidak memiliki tombol/link menuju form pelanggan.
-- **Tanpa elemen dekoratif tambahan:** Tidak ada shadow (bayangan), tidak ada hover animasi daftar tarif, dan tidak ada footer/copyright.
-- Pemisahan halaman dibuat tegas untuk memudahkan pemahaman alur kerja MVC.
+Antarmuka dirancang murni fungsional, rapi, dan berbasis warna bawaan framework Laravel Breeze (Tailwind CSS standard):
+- **Daftar Tarif Layanan:** Disajikan dalam bentuk tabel data (`<table>`) yang rapi dan terstruktur, bukan tumpukan kartu.
+- **Tanpa Header Berlebih:** Header banner atas di halaman pendaftaran dihapus agar layar langsung fokus ke formulir dan tabel layanan.
+- **Tanpa Cross-Navigation:** Sisi pelanggan tidak memiliki tombol/link menuju admin login, dan sisi admin tidak memiliki tombol/link menuju form pelanggan.
+- **Tanpa Elemen Dekoratif Tambahan:** Tidak ada shadow (bayangan), tidak ada hover animasi berlebihan, dan tidak ada footer/copyright yang tidak diperlukan.
+- **Pemisahan Halaman:** Dibuat mandiri untuk masing-masing peran (User Order, Nota Sukses, Dashboard Admin, dan Master Layanan CRUD).
 
 ```
 resources/views/
