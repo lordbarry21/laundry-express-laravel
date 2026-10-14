@@ -18,9 +18,6 @@
                     <x-nav-link :href="route('services.index')" :active="request()->routeIs('services.*')">
                         {{ __('Master Layanan') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('order.create')" :active="false" target="_blank">
-                        {{ __('Lihat Form Pelanggan ↗') }}
-                    </x-nav-link>
                 </div>
             </div>
 
@@ -78,9 +75,6 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('services.index')" :active="request()->routeIs('services.*')">
                 {{ __('Master Layanan') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('order.create')" :active="false">
-                {{ __('Lihat Form Pelanggan ↗') }}
             </x-responsive-nav-link>
         </div>
 

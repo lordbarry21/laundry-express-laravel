@@ -20,8 +20,8 @@
 
             <!-- Page Heading -->
             @isset($header)
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                <header class="bg-white border-b border-gray-300">
+                    <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
                 </header>
@@ -29,15 +29,15 @@
 
             <!-- Page Content -->
             <main>
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
                     @if (session('success'))
-                        <div class="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm">
+                        <div style="border: 1px solid green; background-color: #e6ffe6; color: green; padding: 8px; margin-bottom: 12px; font-size: 14px;">
                             {{ session('success') }}
                         </div>
                     @endif
 
                     @if (session('error'))
-                        <div class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+                        <div style="border: 1px solid red; background-color: #ffe6e6; color: red; padding: 8px; margin-bottom: 12px; font-size: 14px;">
                             {{ session('error') }}
                         </div>
                     @endif
