@@ -4,25 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
     use HasFactory;
 
-    protected $table = 'orders';
+    //
 
-    protected $fillable = [
-        'customer_name',
-        'whatsapp_number',
-        'total_price',
-        'status',
-    ];
+    protected $guarded = ['id'];
 
-    /**
-     * Relasi ke OrderDetail (satu pesanan memiliki banyak rincian item)
-     */
-    public function orderDetails(): HasMany
+    // Relasi: 1 Pesanan punya banyak detail item
+    public function orderDetails()
     {
         return $this->hasMany(OrderDetail::class, 'order_id');
     }

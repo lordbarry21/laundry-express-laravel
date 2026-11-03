@@ -2,130 +2,130 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LaundryItem;
 use App\Models\Order;
 use App\Models\OrderDetail;
-use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
     /**
-     * SISI PELANGGAN: Menampilkan halaman formulir pemesanan layanan laundry (Halaman User Tersendiri)
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $laundry_items = LaundryItem::all();
+
+        return view('customer.index', compact('laundry_items'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
      */
     public function create()
     {
-        $services = Service::all();
-        return view('order.create', compact('services'));
+        //
     }
 
     /**
-     * SISI PELANGGAN: Memproses transaksi pemesanan laundry baru
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'customer_name'   => 'required|string|max:255',
-            'whatsapp_number' => 'required|string|max:20',
-            'service_id'      => 'required|exists:services,id',
-            'qty_or_weight'   => 'required|integer|min:1',
+        $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'queue_number' => 'required|integer|min:1',
+            'items' => 'required|array',
+            'items.*' => 'nullable|integer|min:0',
         ]);
+
+        $orderedItems = array_filter($request->items, fn ($qty) => $qty > 0);
+
+        if (empty($orderedItems)) {
+            return back()->with('error', 'Pilih minimal satu layanan!');
+        }
 
         DB::beginTransaction();
         try {
-            // Ambil data layanan yang dipilih
-            $service = Service::findOrFail($validated['service_id']);
-
-            // Hitung subtotal dan total harga transaksi
-            $subtotal   = $service->price_per_unit * $validated['qty_or_weight'];
-            $totalPrice = $subtotal;
-
-            // 1. Simpan Header Transaksi (orders)
             $order = Order::create([
-                'customer_name'   => $validated['customer_name'],
-                'whatsapp_number' => $validated['whatsapp_number'],
-                'total_price'     => $totalPrice,
-                'status'          => 'Antrean',
+                'customer_name' => $request->customer_name,
+                'queue_number' => $request->queue_number,
+                'total_price' => 0,
+                'status' => 'pending',
             ]);
 
-            // 2. Simpan Detail Transaksi (order_details)
-            OrderDetail::create([
-                'order_id'      => $order->id,
-                'service_id'    => $service->id,
-                'qty_or_weight' => $validated['qty_or_weight'],
-                'subtotal'      => $subtotal,
-            ]);
+            $totalPrice = 0;
 
+            foreach ($orderedItems as $laundryItemId => $quantity) {
+                $laundryItem = LaundryItem::findOrFail($laundryItemId);
+                $subtotal = $laundryItem->price * $quantity;
+                $totalPrice += $subtotal;
+
+                OrderDetail::create([
+                    'order_id' => $order->id,
+                    'laundry_item_id' => $laundryItem->id,
+                    'quantity' => $quantity,
+                    'subtotal' => $subtotal, // Disimpan ke kolom subtotal
+                ]);
+            }
+
+            $order->update(['total_price' => $totalPrice]);
             DB::commit();
 
-            return redirect()->route('order.success', $order->id)
-                ->with('success', 'Pendaftaran pesanan laundry berhasil dikirim!');
+            return redirect()->route('customer.index')->with('success', 'Pesanan berhasil dibuat! Nomor Antrean: '.$order->queue_number);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memproses pesanan: ' . $e->getMessage())->withInput();
+
+            return back()->with('error', 'Gagal memproses pesanan: '.$e->getMessage());
         }
     }
 
     /**
-     * SISI PELANGGAN: Menampilkan bukti / nota pendaftaran pesanan laundry
+     * Display the specified resource.
      */
-    public function success(Order $order)
+    public function show(Order $order)
     {
-        $order->load('orderDetails.service');
-        return view('order.success', compact('order'));
+        //
     }
 
     /**
-     * SISI ADMIN: Halaman Dashboard Tersendiri untuk memantau rekap & statistik pesanan
+     * Show the form for editing the specified resource.
      */
-    public function dashboard(Request $request)
+    public function edit(Order $order)
     {
-        // Query pesanan dengan relasi detail dan layanan
-        $query = Order::with('orderDetails.service')->latest();
-
-        // Filter opsional berdasarkan status pengerjaan
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $orders = $query->paginate(10)->withQueryString();
-
-        // Data statistik untuk ringkasan di dashboard
-        $stats = [
-            'total'     => Order::count(),
-            'antrean'   => Order::where('status', 'Antrean')->count(),
-            'dicuci'    => Order::where('status', 'Dicuci')->count(),
-            'selesai'   => Order::where('status', 'Selesai')->count(),
-            'pendapatan'=> Order::where('status', 'Selesai')->sum('total_price'),
-        ];
-
-        return view('dashboard', compact('orders', 'stats'));
+        //
     }
 
     /**
-     * SISI ADMIN: Mengupdate progres status pengerjaan cuci (Antrean -> Dicuci -> Selesai)
+     * Update the specified resource in storage.
      */
-    public function updateStatus(Request $request, Order $order)
+    public function update(Request $request, Order $order)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:Antrean,Dicuci,Selesai',
-        ]);
-
-        $order->update([
-            'status' => $validated['status'],
-        ]);
-
-        return back()->with('success', "Status pesanan #{$order->id} ({$order->customer_name}) berhasil diubah menjadi: {$order->status}!");
+        //
     }
 
     /**
-     * SISI ADMIN: Menghapus data transaksi pesanan jika diperlukan
+     * Remove the specified resource from storage.
      */
     public function destroy(Order $order)
     {
-        $orderId = $order->id;
-        $order->delete();
+        //
+    }
 
-        return back()->with('success', "Pesanan #{$orderId} berhasil dihapus!");
+    public function adminDashboard()
+    {
+        $orders = Order::with('orderDetails.laundryItem')->latest()->get();
+
+        return view('dashboard', compact('orders'));
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate(['status' => 'required|string']);
+        $order = Order::findOrFail($id);
+        $order->update(['status' => $request->status]);
+
+        return back()->with('success', 'Status pesanan #'.$order->id.' berhasil diperbarui!');
     }
 }

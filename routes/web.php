@@ -1,48 +1,28 @@
 <?php
 
+use App\Http\Controllers\LaundryItemController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes - Sistem Pendaftaran Layanan Laundry Express
-|--------------------------------------------------------------------------
-*/
+// Halaman utama (Katalog Layanan Pelanggan)
+Route::get('/', [OrderController::class, 'index'])->name('customer.index');
+Route::post('/checkout', [OrderController::class, 'store'])->name('customer.checkout');
 
-// ==========================================
-// 1. RUTE SISI PELANGGAN (PUBLIC / USER)
-// ==========================================
-// Halaman Form Pemesanan Laundry
-Route::get('/', [OrderController::class, 'create'])->name('order.create');
-// Proses Submit Transaksi Pemesanan
-Route::post('/order', [OrderController::class, 'store'])->name('order.store');
-// Halaman Bukti / Nota Pendaftaran Pesanan
-Route::get('/order/{order}/success', [OrderController::class, 'success'])->name('order.success');
+// Arahkan dashboard utama Breeze langsung ke Admin Dashboard
+Route::get('/dashboard', [OrderController::class, 'adminDashboard'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
-// ==========================================
-// 2. RUTE SISI ADMIN (TERPROTEKSI AUTH BREEZE)
-// ==========================================
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Halaman Dashboard Tersendiri: Rekap Pesanan & Progres Cuci
-    Route::get('/dashboard', [OrderController::class, 'dashboard'])->name('dashboard');
-    Route::patch('/admin/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.updateStatus');
-    Route::delete('/admin/orders/{order}', [OrderController::class, 'destroy'])->name('admin.orders.destroy');
-
-    // Halaman CRUD Master Layanan Tersendiri:
-    // - GET  /services          -> Index (Daftar Layanan)
-    // - GET  /services/create   -> Create (Halaman Tambah Tersendiri)
-    // - POST /services          -> Store (Simpan)
-    // - GET  /services/{id}/edit-> Edit (Halaman Edit Tersendiri)
-    // - PUT  /services/{id}     -> Update (Perbarui)
-    // - DELETE /services/{id}   -> Destroy (Hapus)
-    Route::resource('services', ServiceController::class);
-
-    // Profile Admin (Breeze)
+Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Alias route untuk admin dashboard
+    Route::get('/admin/dashboard', [OrderController::class, 'adminDashboard'])->name('admin.dashboard');
+    Route::patch('/admin/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.updateStatus');
+    Route::resource('/admin/laundry_items', LaundryItemController::class);
 });
 
 require __DIR__.'/auth.php';

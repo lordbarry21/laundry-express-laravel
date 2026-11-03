@@ -1,11 +1,4 @@
 *.log
-*.sqlite
-.codebase-memory/
-.agents/
-.claude/
-.factory/
-.grok/
-.pi/
 .DS_Store
 .env
 .env.backup
