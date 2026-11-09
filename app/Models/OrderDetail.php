@@ -13,8 +13,12 @@ class OrderDetail extends Model
 
     protected $table = 'order_details';
 
-    // Gunakan guarded agar kolom 'subtotal' diizinin masuk ke database
     protected $guarded = ['id'];
+
+    public function getSubtotalAttribute(): int
+    {
+        return (int) (($this->price ?? 0) * ($this->quantity ?? 1));
+    }
 
     public function laundryItem()
     {

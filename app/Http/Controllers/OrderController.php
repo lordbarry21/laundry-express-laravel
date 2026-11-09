@@ -66,7 +66,7 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'laundry_item_id' => $laundryItem->id,
                     'quantity' => $quantity,
-                    'subtotal' => $subtotal, // Disimpan ke kolom subtotal
+                    'price' => $laundryItem->price,
                 ]);
             }
 
