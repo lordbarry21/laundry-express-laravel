@@ -5,10 +5,10 @@
                 {{ __('Daftar Pesanan Masuk') }}
             </h2>
             <div class="flex items-center gap-3">
-                <a href="{{ route('services.index') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 shadow-sm transition">
+                <a href="{{ route('services.index') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-sm transition">
                     Kelola Layanan
                 </a>
-                <a href="{{ route('customer.index') }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 shadow-sm transition">
+                <a href="{{ route('customer.index') }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 shadow-sm transition">
                     Lihat Layanan Customer
                 </a>
             </div>
@@ -53,12 +53,12 @@
                                                 <li>
                                                     <strong>{{ $detail->service->service_name ?? 'Layanan' }}</strong>
                                                     {{ $detail->qty_or_weight }} {{ $detail->service->unit_type ?? '' }}
-                                                    <span class="text-xs text-gray-400">(Rp {{ number_format($detail->subtotal) }})</span>
+                                                    <span class="text-xs text-gray-600">(Rp {{ number_format($detail->subtotal) }})</span>
                                                 </li>
                                             @endforeach
                                         </ul>
                                     </td>
-                                    <td class="p-4 font-bold text-green-600">
+                                    <td class="p-4 font-bold text-green-700">
                                         Rp {{ number_format($order->total_price) }}
                                     </td>
                                     <td class="p-4">
@@ -74,7 +74,7 @@
                                         <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
                                             @csrf
                                             @method('PATCH')
-                                            <select name="status" aria-label="Status pesanan {{ $order->id }}" onchange="this.form.submit()" class="text-xs border border-gray-300 rounded p-1.5 bg-white shadow-sm font-semibold">
+                                            <select name="status" aria-label="Status pesanan {{ $order->id }}" onchange="this.form.submit()" class="text-xs border border-gray-500 rounded p-1.5 bg-white shadow-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-700">
                                                 @foreach(['Antrean', 'Dicuci', 'Selesai'] as $status)
                                                     <option value="{{ $status }}" @selected($order->status === $status)>{{ $status }}</option>
                                                 @endforeach
@@ -84,7 +84,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="p-6 text-center text-gray-500">Belum ada pesanan masuk.</td>
+                                    <td colspan="7" class="p-6 text-center text-gray-600">Belum ada pesanan masuk.</td>
                                 </tr>
                             @endforelse
                         </tbody>

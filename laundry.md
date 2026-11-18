@@ -1,4 +1,19 @@
-# Sistem Pendaftaran Layanan Laundry
+# Sistem Pendaftaran Layanan Laundry / Cuci Kilat
+
+**Skenario:** Aplikasi pemesanan jasa cuci & setrika yang mencatat transaksi berat pakaian (kg) atau layanan paket *dry cleaning*.
+
+### A. Ketentuan Struktur Data & Basis Data (db_laundry_express)
+
+- **services (Master Layanan):** id, service_name (Varchar), category (Enum: Kiloan, Satuan, Express), price_per_unit (Integer), unit_type (Enum: Kg, Pcs), description (Text), timestamps.
+- **orders (Header Transaksi):** id, customer_name (Varchar), whatsapp_number (Varchar), total_price (Integer), status (Enum: Antrean, Dicuci, Selesai), timestamps.
+- **order_details (Detail Transaksi):** id, order_id (Foreign Key), service_id (Foreign Key), qty_or_weight (Integer), subtotal (Integer), timestamps.
+
+### B. Alur Kerja (Workflow)
+
+1. **Pelanggan:** Memilih paket/layanan cuci, mengisi perkiraan berat/jumlah unit serta kontak WhatsApp, lalu melakukan pemesanan.
+2. **Admin:** Login, mengelola tarif & paket layanan (CRUD), serta mengupdate progres status pengerjaan cuci.
+
+---
 
 Panduan langkah demi langkah membangun aplikasi pendaftaran layanan Laundry Express menggunakan Laravel + Breeze + Tailwind CSS + MySQL (database `db_laundry_express`, skema `services`, `orders`, `order_details`, `users.is_admin`).
 
@@ -104,9 +119,8 @@ mysql -u root -e "CREATE DATABASE IF NOT EXISTS db_laundry_express;"
 <!-- step: {"id":"modul1-1-2-database-env","module":1,"step":1,"part":2,"mode":"env","method":null,"target":".env"} -->
 **Kerjakan di sini:**
 1. Buka file .env di root proyek (klik "Buka file tujuan"), lalu gulir ke bagian konfigurasi DB_CONNECTION (sekitar baris 22 sampai 27).
-2. Klik "Pratinjau sisipkan kode" untuk mengganti konfigurasi SQLite bawaan menjadi MySQL secara otomatis (termasuk membuka baris DB_* yang terkomentar).
-3. Jika mengedit manual, hapus tanda komentar # di depan DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, dan DB_PASSWORD, lalu cocokkan nilainya.
-4. Ubah DB_PORT=3306 menjadi port MySQL aktif di komputermu (misalnya 3307 pada sebagian instalasi XAMPP/Laragon), biarkan DB_PASSWORD= kosong jika root tanpa password, lalu simpan file (Ctrl+S).
+2. Jika mengedit manual, hapus tanda komentar # di depan DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, dan DB_PASSWORD, lalu sesuaikan nilainya. Jika memakai tombol "Pratinjau sisipkan kode", pastikan baris DB_* yang masih diawali tanda # tidak dibiarkan terkomentar agar tidak bentrok atau ganda.
+3. Ubah DB_PORT=3306 menjadi port MySQL aktif di komputermu (misalnya 3307 pada sebagian instalasi XAMPP/Laragon), biarkan DB_PASSWORD= kosong jika root tanpa password, lalu simpan file (Ctrl+S).
 
 **Tujuannya:**
 Mengubah driver database Laravel dari SQLite ke MySQL lokal serta menautkannya ke database db_laundry_express dengan kredensial yang tepat.
@@ -465,10 +479,10 @@ use WithoutModelEvents;
 2. Ganti isi kurung kurawal run() (hapus contoh factory user lama jika masih ada) dengan kode di bawah, lalu simpan file.
 
 **Tujuannya:**
-Menyiapkan akun admin uji (email: admin@gmail.com, password: password123) dengan is_admin = true menggunakan firstOrCreate agar idempoten, lalu menjalankan ServiceSeeder hanya jika tabel services masih kosong.
+Menyiapkan akun admin uji (email: admin@gmail.com, password: password123) dengan is_admin = true menggunakan firstOrCreate dan pengecekan ! $admin->is_admin agar idempoten saat seeder dijalankan ulang, lalu menjalankan ServiceSeeder hanya jika tabel services masih kosong.
 
 **Perhatian:**
-Perhatikan is_admin di-assign langsung ($admin->is_admin = true) dan tidak dimasukkan ke $fillable User agar user register biasa tidak bisa menyuntikkan status admin lewat request form (Mass Assignment protection).
+Perhatikan is_admin di-assign langsung ($admin->is_admin = true) dan tidak dimasukkan ke $fillable User agar user register biasa tidak bisa menyuntikkan status admin lewat request form (Mass Assignment protection). Pastikan model Service dan User pada langkah berikutnya sudah dikonfigurasi sebelum menjalankan php artisan migrate --seed.
 
 ```php
 $admin = User::firstOrCreate(['email' => 'admin@gmail.com'], [
@@ -476,7 +490,7 @@ $admin = User::firstOrCreate(['email' => 'admin@gmail.com'], [
     'password' => Hash::make('password123'),
 ]);
 
-if ($admin->wasRecentlyCreated) {
+if (! $admin->is_admin) {
     $admin->is_admin = true;
     $admin->save();
 }
@@ -486,26 +500,9 @@ if (! Service::exists()) {
 }
 ```
 
-### Terapkan migration is_admin dan jalankan seeder ke database
-
-<!-- step: {"id":"modul1-7-1-reset-dan-seed","module":1,"step":7,"part":1,"mode":"terminal","method":null,"target":"terminal"} -->
-**Kerjakan di sini:**
-1. Pastikan file migration add_is_admin_to_users_table, ServiceSeeder, dan DatabaseSeeder sudah disimpan.
-2. Jalankan perintah ini di terminal VS Code dari folder proyek laundry.
-
-**Tujuannya:**
-Menerapkan kolom baru users.is_admin ke MySQL dan sekaligus mengeksekusi DatabaseSeeder untuk membuat akun admin serta mengisi 5 layanan laundry awal.
-
-**Perhatian:**
-Jika di langkah DatabaseSeeder nanti terjadi error "Unknown column is_admin", berarti migration add_is_admin_to_users_table belum tersimpan sebelum perintah ini dijalankan.
-
-```sh
-php artisan migrate --seed
-```
-
 ### Tambahkan import HasFactory di model Service
 
-<!-- step: {"id":"modul1-8-1-service","module":1,"step":8,"part":1,"mode":"import","method":null,"target":"app/Models/Service.php"} -->
+<!-- step: {"id":"modul1-8-1-service","module":1,"step":7,"part":1,"mode":"import","method":null,"target":"app/Models/Service.php"} -->
 **Kerjakan di sini:**
 1. Buka file app/Models/Service.php.
 2. Tambahkan use Illuminate\Database\Eloquent\Factories\HasFactory; di bagian use atas class Service.
@@ -522,7 +519,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 ### Pasang trait HasFactory di dalam class Service
 
-<!-- step: {"id":"modul1-8-2-service","module":1,"step":8,"part":2,"mode":"trait","method":null,"target":"app/Models/Service.php"} -->
+<!-- step: {"id":"modul1-8-2-service","module":1,"step":7,"part":2,"mode":"trait","method":null,"target":"app/Models/Service.php"} -->
 **Kerjakan di sini:**
 1. Masih di app/Models/Service.php, lihat baris awal di dalam class Service extends Model { ... }.
 2. Tambahkan use HasFactory; di dalam body class.
@@ -539,16 +536,16 @@ use HasFactory;
 
 ### Atur nama tabel dan $guarded pada model Service
 
-<!-- step: {"id":"modul1-8-3-service","module":1,"step":8,"part":3,"mode":"class-members","method":null,"target":"app/Models/Service.php"} -->
+<!-- step: {"id":"modul1-8-3-service","module":1,"step":7,"part":3,"mode":"class-members","method":null,"target":"app/Models/Service.php"} -->
 **Kerjakan di sini:**
 1. Masih di app/Models/Service.php, tambahkan properti $table dan $guarded di dalam class Service.
 2. Simpan file dengan Ctrl+S.
 
 **Tujuannya:**
-Menegaskan nama tabel services dan melindungi kolom id dari mass-assignment sambil mengizinkan Service::create()/update() mengisi service_name, category, price_per_unit, unit_type, dan description setelah divalidasi di controller.
+Menegaskan nama tabel services dan melindungi kolom id dari mass-assignment sambil mengizinkan Service::create()/update() mengisi service_name, category, price_per_unit, unit_type, dan description (baik saat ServiceSeeder dijalankan pada langkah berikutnya maupun setelah divalidasi di controller).
 
 **Perhatian:**
-Jangan mencampurkan properti $fillable dan $guarded bersamaan di satu model yang sama.
+Langkah ini wajib selesai sebelum menjalankan php artisan migrate --seed agar Service::create() di ServiceSeeder tidak gagal dengan MassAssignmentException. Jangan mencampurkan properti $fillable dan $guarded bersamaan di satu model yang sama.
 
 ```php
 protected $table = 'services';
@@ -558,7 +555,7 @@ protected $guarded = ['id'];
 
 ### Import HasFactory dan HasMany di model Order
 
-<!-- step: {"id":"modul1-8-4-order","module":1,"step":8,"part":4,"mode":"import","method":null,"target":"app/Models/Order.php"} -->
+<!-- step: {"id":"modul1-8-4-order","module":1,"step":7,"part":4,"mode":"import","method":null,"target":"app/Models/Order.php"} -->
 **Kerjakan di sini:**
 1. Buka file app/Models/Order.php.
 2. Tambahkan dua baris import di bawah di bagian atas class Order.
@@ -576,12 +573,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 ### Pasang trait HasFactory di dalam class Order
 
-<!-- step: {"id":"modul1-8-5-order","module":1,"step":8,"part":5,"mode":"trait","method":null,"target":"app/Models/Order.php"} -->
+<!-- step: {"id":"modul1-8-5-order","module":1,"step":7,"part":5,"mode":"trait","method":null,"target":"app/Models/Order.php"} -->
 **Kerjakan di sini:**
 1. Masih di app/Models/Order.php, tambahkan use HasFactory; di dalam kurung kurawal class Order.
 
 **Tujuannya:**
 Mengaktifkan dukungan model factory pada model Order.
+
+**Perhatian:**
+Pastikan trait use HasFactory; ditulis di dalam kurung kurawal class Order, bukan di area import namespace di atas class.
 
 ```php
 use HasFactory;
@@ -589,7 +589,7 @@ use HasFactory;
 
 ### Atur $guarded dan relasi orderDetails() di model Order
 
-<!-- step: {"id":"modul1-8-6-order","module":1,"step":8,"part":6,"mode":"class-members","method":null,"target":"app/Models/Order.php"} -->
+<!-- step: {"id":"modul1-8-6-order","module":1,"step":7,"part":6,"mode":"class-members","method":null,"target":"app/Models/Order.php"} -->
 **Kerjakan di sini:**
 1. Masih di app/Models/Order.php, sisipkan properti $guarded dan method orderDetails() ke dalam class Order.
 2. Simpan file (Ctrl+S).
@@ -611,7 +611,7 @@ public function orderDetails(): HasMany
 
 ### Import HasFactory dan BelongsTo di model OrderDetail
 
-<!-- step: {"id":"modul1-8-7-orderdetail","module":1,"step":8,"part":7,"mode":"import","method":null,"target":"app/Models/OrderDetail.php"} -->
+<!-- step: {"id":"modul1-8-7-orderdetail","module":1,"step":7,"part":7,"mode":"import","method":null,"target":"app/Models/OrderDetail.php"} -->
 **Kerjakan di sini:**
 1. Buka file app/Models/OrderDetail.php.
 2. Tambahkan import HasFactory dan BelongsTo di area use atas class OrderDetail.
@@ -629,12 +629,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 ### Pasang trait HasFactory di dalam class OrderDetail
 
-<!-- step: {"id":"modul1-8-8-orderdetail","module":1,"step":8,"part":8,"mode":"trait","method":null,"target":"app/Models/OrderDetail.php"} -->
+<!-- step: {"id":"modul1-8-8-orderdetail","module":1,"step":7,"part":8,"mode":"trait","method":null,"target":"app/Models/OrderDetail.php"} -->
 **Kerjakan di sini:**
 1. Masih di app/Models/OrderDetail.php, tambahkan use HasFactory; di awal tubuh class OrderDetail.
 
 **Tujuannya:**
 Mengaktifkan dukungan factory pada model OrderDetail.
+
+**Perhatian:**
+Letakkan use HasFactory; di dalam kurung kurawal class OrderDetail tepat sebelum properti $table.
 
 ```php
 use HasFactory;
@@ -642,7 +645,7 @@ use HasFactory;
 
 ### Atur $table, $guarded, dan relasi belongsTo di OrderDetail
 
-<!-- step: {"id":"modul1-8-9-orderdetail","module":1,"step":8,"part":9,"mode":"class-members","method":null,"target":"app/Models/OrderDetail.php"} -->
+<!-- step: {"id":"modul1-8-9-orderdetail","module":1,"step":7,"part":9,"mode":"class-members","method":null,"target":"app/Models/OrderDetail.php"} -->
 **Kerjakan di sini:**
 1. Masih di app/Models/OrderDetail.php, tambahkan $table, $guarded, serta method service() dan order() di dalam class OrderDetail.
 2. Simpan file (Ctrl+S).
@@ -671,7 +674,7 @@ public function order(): BelongsTo
 
 ### Tambahkan casting boolean is_admin di model User
 
-<!-- step: {"id":"modul1-8-10-user-casts","module":1,"step":8,"part":10,"mode":"method-body","method":"casts","target":"app/Models/User.php"} -->
+<!-- step: {"id":"modul1-8-10-user-casts","module":1,"step":7,"part":10,"mode":"method-body","method":"casts","target":"app/Models/User.php"} -->
 **Kerjakan di sini:**
 1. Buka file app/Models/User.php, lalu cari method protected function casts(): array di bagian bawah class.
 2. Gunakan "Pratinjau sisipkan kode" atau tambahkan baris 'is_admin' => 'boolean', di dalam array return method casts(), lalu simpan file.
@@ -689,6 +692,23 @@ return [
     'password' => 'hashed',
     'is_admin' => 'boolean',
 ];
+```
+
+### Terapkan migration is_admin dan jalankan seeder ke database
+
+<!-- step: {"id":"modul1-7-1-reset-dan-seed","module":1,"step":8,"part":1,"mode":"terminal","method":null,"target":"terminal"} -->
+**Kerjakan di sini:**
+1. Pastikan file migration add_is_admin_to_users_table, ServiceSeeder, DatabaseSeeder, serta konfigurasi model Service, Order, OrderDetail, dan User pada langkah sebelumnya sudah disimpan.
+2. Jalankan perintah ini di terminal VS Code dari folder proyek laundry.
+
+**Tujuannya:**
+Menerapkan kolom baru users.is_admin ke MySQL dan sekaligus mengeksekusi DatabaseSeeder untuk membuat akun admin serta mengisi 5 layanan laundry awal.
+
+**Perhatian:**
+Jika muncul error MassAssignmentException pada Service, pastikan properti protected $guarded = ['id']; di app/Models/Service.php sudah disimpan. Jika muncul error "Unknown column is_admin", berarti migration add_is_admin_to_users_table belum tersimpan sebelum perintah ini dijalankan.
+
+```sh
+php artisan migrate --seed
 ```
 
 ## Modul 2 · Login admin dan CRUD layanan
@@ -827,6 +847,9 @@ return view('admin.services.index', compact('services'));
 **Tujuannya:**
 Menampilkan halaman formulir tambah layanan baru di resources/views/admin/services/create.blade.php saat admin menekan tombol Tambah Layanan.
 
+**Perhatian:**
+Pastikan file view resources/views/admin/services/create.blade.php dibuat di langkah berikutnya sebelum membuka rute /admin/services/create.
+
 ```php
 return view('admin.services.create');
 ```
@@ -949,7 +972,7 @@ return redirect()->route('services.index')->with('success', 'Data layanan berhas
 2. Gunakan "Pratinjau sisipkan kode" atau salin seluruh markup Blade di bawah ke dalam file, lalu simpan (Ctrl+S).
 
 **Tujuannya:**
-Menampilkan tabel manajemen layanan laundry untuk admin lengkap dengan alert sukses/error, tombol Tambah Layanan, badge kategori (Kiloan/Satuan/Express), format harga Rupiah, aksi Edit & Hapus (dengan method DELETE + konfirmasi browser), serta link pagination.
+Menampilkan tabel manajemen layanan laundry untuk admin (kolom Nama, Kategori, Tarif per Unit, dan Aksi) lengkap dengan alert sukses/error, tombol + Tambah Layanan, format harga Rupiah, aksi Edit & Hapus (dengan method DELETE + konfirmasi browser), status kosong (empty state) bila belum ada data, serta link pagination.
 
 **Perhatian:**
 Pastikan tag form hapus selalu menyertakan @csrf dan @method('DELETE') karena HTML form standar hanya mendukung GET dan POST.
@@ -961,7 +984,7 @@ Pastikan tag form hapus selalu menyertakan @csrf dan @method('DELETE') karena HT
     </x-slot>
 
     <div class="py-12 max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <a href="{{ route('services.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mb-4 inline-block font-semibold">+ Tambah Layanan</a>
+        <a href="{{ route('services.create') }}" class="bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 text-white px-4 py-2 rounded mb-4 inline-block font-semibold">+ Tambah Layanan</a>
 
         @if(session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 p-3 rounded mb-4">{{ session('success') }}</div>
@@ -970,33 +993,40 @@ Pastikan tag form hapus selalu menyertakan @csrf dan @method('DELETE') karena HT
         @if(session('error'))
             <div class="bg-red-100 text-red-800 p-3 rounded mb-4">{{ session('error') }}</div>
         @endif
-        <table class="w-full bg-white border mt-4 shadow-sm rounded-lg overflow-hidden">
-            <thead>
-                <tr class="bg-gray-100 border-b text-gray-600 text-sm">
-                    <th class="p-3">Nama</th>
-                    <th class="p-3">Kategori</th>
-                    <th class="p-3">Tarif per Unit</th>
-                    <th class="p-3">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($services as $service)
-                <tr class="border-b text-center text-sm">
-                    <td class="p-3 font-semibold">{{ $service->service_name }}</td>
-                    <td class="p-3">{{ $service->category }}</td>
-                    <td class="p-3 font-bold text-green-600">Rp {{ number_format($service->price_per_unit, 0, ',', '.') }} / {{ $service->unit_type }}</td>
-                    <td class="p-3">
-                        <a href="{{ route('services.edit', $service->id) }}" class="text-blue-600 hover:underline mr-3 font-semibold">Edit</a>
-                        <form action="{{ route('services.destroy', $service->id) }}" method="POST" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" onclick="return confirm('Yakin hapus data ini?')" class="text-red-600 hover:underline font-semibold">Hapus</button>
-                        </form>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+
+        <div class="overflow-x-auto bg-white border mt-4 shadow-sm rounded-lg">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-100 border-b text-gray-700 text-sm">
+                        <th class="p-3">Nama</th>
+                        <th class="p-3">Kategori</th>
+                        <th class="p-3">Tarif per Unit</th>
+                        <th class="p-3">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($services as $service)
+                    <tr class="border-b text-center text-sm">
+                        <td class="p-3 font-semibold">{{ $service->service_name }}</td>
+                        <td class="p-3">{{ $service->category }}</td>
+                        <td class="p-3 font-bold text-green-700">Rp {{ number_format($service->price_per_unit, 0, ',', '.') }} / {{ $service->unit_type }}</td>
+                        <td class="p-3">
+                            <a href="{{ route('services.edit', $service->id) }}" class="text-blue-600 hover:underline mr-3 font-semibold">Edit</a>
+                            <form action="{{ route('services.destroy', $service->id) }}" method="POST" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" onclick="return confirm('Yakin hapus data ini?')" class="text-red-600 hover:underline font-semibold">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="4" class="p-6 text-center text-gray-600">Belum ada data layanan.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
         <div class="mt-4">{{ $services->links() }}</div>
     </div>
 </x-app-layout>
@@ -1010,7 +1040,7 @@ Pastikan tag form hapus selalu menyertakan @csrf dan @method('DELETE') karena HT
 2. Isi seluruh file dengan markup Blade form ini, lalu simpan (Ctrl+S).
 
 **Tujuannya:**
-Menyediakan form input terstruktur menuju route('services.store') lengkap dengan pesan error per field (@error), helper old() agar ketikan tidak hilang saat gagal validasi, dan pilihan category serta unit_type yang persis cocok dengan enum tabel.
+Menyediakan form input terstruktur menuju route('services.store') lengkap dengan banner error validasi (@if($errors->any())), helper old() agar ketikan tidak hilang saat gagal validasi, indikator fokus keyboard yang jelas, serta pilihan category dan unit_type yang persis cocok dengan enum tabel.
 
 **Perhatian:**
 Atribut name pada input (service_name, category, price_per_unit, unit_type, description) harus identik dengan kunci validasi di ServiceController::store().
@@ -1034,11 +1064,11 @@ Atribut name pada input (service_name, category, price_per_unit, unit_type, desc
             @csrf
             <div class="mb-4">
                 <label for="service_name" class="block font-medium mb-1">Nama Layanan</label>
-                <input type="text" id="service_name" name="service_name" value="{{ old('service_name') }}" class="w-full border rounded p-2" required>
+                <input type="text" id="service_name" name="service_name" value="{{ old('service_name') }}" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
             </div>
             <div class="mb-4">
                 <label for="category" class="block font-medium mb-1">Kategori</label>
-                <select id="category" name="category" class="w-full border rounded p-2" required>
+                <select id="category" name="category" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
                     <option value="Kiloan" @selected(old('category') === 'Kiloan')>Kiloan</option>
                     <option value="Satuan" @selected(old('category') === 'Satuan')>Satuan</option>
                     <option value="Express" @selected(old('category') === 'Express')>Express</option>
@@ -1046,20 +1076,20 @@ Atribut name pada input (service_name, category, price_per_unit, unit_type, desc
             </div>
             <div class="mb-4">
                 <label for="unit_type" class="block font-medium mb-1">Satuan</label>
-                <select id="unit_type" name="unit_type" class="w-full border rounded p-2" required>
+                <select id="unit_type" name="unit_type" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
                     <option value="Kg" @selected(old('unit_type') === 'Kg')>Kg</option>
                     <option value="Pcs" @selected(old('unit_type') === 'Pcs')>Pcs</option>
                 </select>
             </div>
             <div class="mb-4">
                 <label for="price_per_unit" class="block font-medium mb-1">Tarif per Unit (Rp)</label>
-                <input type="number" id="price_per_unit" name="price_per_unit" min="0" max="2147483647" value="{{ old('price_per_unit') }}" class="w-full border rounded p-2" required>
+                <input type="number" id="price_per_unit" name="price_per_unit" min="0" max="2147483647" value="{{ old('price_per_unit') }}" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
             </div>
             <div class="mb-4">
                 <label for="description" class="block font-medium mb-1">Deskripsi</label>
-                <textarea id="description" name="description" class="w-full border rounded p-2" rows="3" required>{{ old('description') }}</textarea>
+                <textarea id="description" name="description" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" rows="3" required>{{ old('description') }}</textarea>
             </div>
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded font-semibold">Simpan Data</button>
+            <button type="submit" class="bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-800 focus:ring-offset-2 text-white px-6 py-2.5 rounded font-semibold">Simpan Data</button>
         </form>
     </div>
 </x-app-layout>
@@ -1098,11 +1128,11 @@ Sertakan selalu @csrf dan @method('PUT') agar Laravel mengarahkan form submit in
             @method('PUT')
             <div class="mb-4">
                 <label for="service_name" class="block font-medium mb-1">Nama Layanan</label>
-                <input type="text" id="service_name" name="service_name" value="{{ old('service_name', $service->service_name) }}" class="w-full border rounded p-2" required>
+                <input type="text" id="service_name" name="service_name" value="{{ old('service_name', $service->service_name) }}" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
             </div>
             <div class="mb-4">
                 <label for="category" class="block font-medium mb-1">Kategori</label>
-                <select id="category" name="category" class="w-full border rounded p-2" required>
+                <select id="category" name="category" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
                     <option value="Kiloan" @selected(old('category', $service->category) === 'Kiloan')>Kiloan</option>
                     <option value="Satuan" @selected(old('category', $service->category) === 'Satuan')>Satuan</option>
                     <option value="Express" @selected(old('category', $service->category) === 'Express')>Express</option>
@@ -1110,20 +1140,20 @@ Sertakan selalu @csrf dan @method('PUT') agar Laravel mengarahkan form submit in
             </div>
             <div class="mb-4">
                 <label for="unit_type" class="block font-medium mb-1">Satuan</label>
-                <select id="unit_type" name="unit_type" class="w-full border rounded p-2" required>
+                <select id="unit_type" name="unit_type" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
                     <option value="Kg" @selected(old('unit_type', $service->unit_type) === 'Kg')>Kg</option>
                     <option value="Pcs" @selected(old('unit_type', $service->unit_type) === 'Pcs')>Pcs</option>
                 </select>
             </div>
             <div class="mb-4">
                 <label for="price_per_unit" class="block font-medium mb-1">Tarif per Unit (Rp)</label>
-                <input type="number" id="price_per_unit" name="price_per_unit" min="0" max="2147483647" value="{{ old('price_per_unit', $service->price_per_unit) }}" class="w-full border rounded p-2" required>
+                <input type="number" id="price_per_unit" name="price_per_unit" min="0" max="2147483647" value="{{ old('price_per_unit', $service->price_per_unit) }}" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
             </div>
             <div class="mb-4">
                 <label for="description" class="block font-medium mb-1">Deskripsi</label>
-                <textarea id="description" name="description" class="w-full border rounded p-2" rows="3" required>{{ old('description', $service->description) }}</textarea>
+                <textarea id="description" name="description" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" rows="3" required>{{ old('description', $service->description) }}</textarea>
             </div>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded font-semibold">Update Data</button>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 text-white px-6 py-2.5 rounded font-semibold">Update Data</button>
         </form>
     </div>
 </x-app-layout>
@@ -1162,6 +1192,9 @@ use Illuminate\View\View;
 
 **Tujuannya:**
 Mengambil seluruh data layanan laundry dari tabel services lalu mengirimkannya ke tampilan katalog publik resources/views/customer/index.blade.php.
+
+**Perhatian:**
+Pastikan nama variabel yang dikirim ke compact() adalah 'services' karena view customer/index.blade.php melakukan loop pada $services.
 
 ```php
 $services = Service::all();
@@ -1286,7 +1319,7 @@ public function updateStatus(Request $request, Order $order): RedirectResponse
 2. Masukkan seluruh kode HTML/Blade + skrip kalkulator estimasi total di bawah ke dalam file, lalu simpan (Ctrl+S).
 
 **Tujuannya:**
-Menampilkan halaman depan aplikasi untuk pelanggan: header navigasi (Login/Register atau tombol Dashboard/Log Out jika sudah login), daftar kartu layanan lengkap dengan harga & satuan, input jumlah/berat (items[service_id]), form identitas pelanggan + WhatsApp menuju customer.checkout, dan JavaScript estimasi total real-time yang mendukung old() input.
+Menampilkan halaman depan aplikasi untuk pelanggan: header navigasi (tautan Admin saat guest, atau Dashboard Admin / Akun Saya saat sudah login), tombol filter kategori, kartu layanan lengkap dengan harga & satuan (beserta status kosong bila layanan/kategori belum ada), input jumlah/berat (items[service_id]), form identitas pelanggan + WhatsApp menuju customer.checkout, serta modal konfirmasi pesanan dengan kalkulator estimasi total real-time dan dukungan tutup modal via tombol Escape.
 
 **Perhatian:**
 Perhatikan JavaScript di halaman ini hanya menampilkan estimasi total agar nyaman bagi pelanggan; perhitungan biaya resmi yang disimpan ke database tetap dilakukan penuh oleh OrderController::store().
@@ -1305,7 +1338,7 @@ Perhatikan JavaScript di halaman ini hanya menampilkan estimasi total agar nyama
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-6">
             <h1 class="text-3xl font-bold text-gray-800">Layanan Laundry</h1>
-            <p class="text-gray-500 text-sm mt-1">Pilih layanan, isi perkiraan berat atau jumlah, lalu masukkan nomor WhatsApp.</p>
+            <p class="text-gray-600 text-sm mt-1">Pilih layanan, isi perkiraan berat atau jumlah, lalu masukkan nomor WhatsApp.</p>
             @guest
                 <a href="{{ route('login') }}" class="mt-2 inline-block text-sm text-blue-700 underline">Admin</a>
             @else
@@ -1334,10 +1367,10 @@ Perhatikan JavaScript di halaman ini hanya menampilkan estimasi total agar nyama
         @endif
 
         <div class="flex flex-wrap justify-center gap-3 mb-8">
-            <button type="button" onclick="filterCategory('all', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-blue-600 text-white shadow-md">Semua Layanan</button>
-            <button type="button" onclick="filterCategory('Kiloan', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-600 hover:bg-gray-200 border">Kiloan</button>
-            <button type="button" onclick="filterCategory('Satuan', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-600 hover:bg-gray-200 border">Satuan</button>
-            <button type="button" onclick="filterCategory('Express', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-600 hover:bg-gray-200 border">Express</button>
+            <button type="button" onclick="filterCategory('all', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-blue-600 text-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2">Semua Layanan</button>
+            <button type="button" onclick="filterCategory('Kiloan', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-700 hover:bg-gray-200 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2">Kiloan</button>
+            <button type="button" onclick="filterCategory('Satuan', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-700 hover:bg-gray-200 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2">Satuan</button>
+            <button type="button" onclick="filterCategory('Express', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-700 hover:bg-gray-200 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2">Express</button>
         </div>
 
         <form id="orderForm" action="{{ route('customer.checkout') }}" method="POST">
@@ -1347,43 +1380,48 @@ Perhatikan JavaScript di halaman ini hanya menampilkan estimasi total agar nyama
                 <h2 class="text-lg font-bold text-gray-700 mb-4 pb-2 border-b">1. Informasi Pemesan</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="customer_name" class="block text-sm font-semibold text-gray-600 mb-1">Nama Lengkap</label>
-                        <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" maxlength="255" required placeholder="Masukkan nama pemesan" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label for="customer_name" class="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap</label>
+                        <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" maxlength="255" required placeholder="Masukkan nama pemesan" class="w-full border border-gray-500 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-700 focus:outline-none">
                     </div>
                     <div>
-                        <label for="whatsapp_number" class="block text-sm font-semibold text-gray-600 mb-1">Nomor WhatsApp</label>
-                        <input type="tel" id="whatsapp_number" name="whatsapp_number" required maxlength="16" pattern="\+?[0-9]{8,15}" value="{{ old('whatsapp_number') }}" placeholder="Contoh: 081234567890" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label for="whatsapp_number" class="block text-sm font-semibold text-gray-700 mb-1">Nomor WhatsApp</label>
+                        <input type="tel" id="whatsapp_number" name="whatsapp_number" required maxlength="16" pattern="\+?[0-9]{8,15}" value="{{ old('whatsapp_number') }}" placeholder="Contoh: 081234567890" class="w-full border border-gray-500 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-700 focus:outline-none">
                     </div>
                 </div>
             </div>
 
             <h2 class="text-lg font-bold text-gray-700 mb-4">2. Pilih Layanan</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                @foreach($services as $service)
+                @forelse($services as $service)
                     <div class="service-card bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between" data-category="{{ $service->category }}">
                         <div>
                             <div class="p-4">
                                 <div class="flex justify-between items-center mb-2">
                                     <span class="text-xs bg-blue-100 text-blue-700 font-semibold px-2.5 py-0.5 rounded">{{ $service->category }}</span>
-                                    <span class="font-bold text-green-600">Rp {{ number_format($service->price_per_unit, 0, ',', '.') }} / {{ $service->unit_type }}</span>
+                                    <span class="font-bold text-green-700">Rp {{ number_format($service->price_per_unit, 0, ',', '.') }} / {{ $service->unit_type }}</span>
                                 </div>
                                 <h3 class="font-bold text-gray-800 text-lg item-name">{{ $service->service_name }}</h3>
-                                <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ $service->description }}</p>
+                                <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ $service->description }}</p>
                             </div>
                         </div>
 
                         <div class="p-4 bg-gray-50 border-t">
-                            <label for="service-{{ $service->id }}" class="block text-xs font-semibold text-gray-600 mb-1">
+                            <label for="service-{{ $service->id }}" class="block text-xs font-semibold text-gray-700 mb-1">
                                 {{ $service->unit_type === 'Kg' ? 'Perkiraan berat (Kg)' : 'Jumlah (Pcs)' }}
                             </label>
-                            <input type="number" id="service-{{ $service->id }}" name="items[{{ $service->id }}]" min="0" step="1" value="{{ old('items.'.$service->id, 0) }}" data-unit="{{ $service->unit_type }}" data-name="{{ $service->service_name }}" data-price="{{ $service->price_per_unit }}" class="item-qty w-full border rounded-lg px-3 py-1.5 text-center font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <input type="number" id="service-{{ $service->id }}" name="items[{{ $service->id }}]" min="0" step="1" value="{{ old('items.'.$service->id, 0) }}" data-unit="{{ $service->unit_type }}" data-name="{{ $service->service_name }}" data-price="{{ $service->price_per_unit }}" class="item-qty w-full border border-gray-500 rounded-lg px-3 py-1.5 text-center font-bold text-gray-700 focus:ring-2 focus:ring-blue-700 focus:outline-none">
                         </div>
                     </div>
-                @endforeach
+                @empty
+                    <div class="md:col-span-3 bg-white p-6 rounded-xl border text-center text-gray-600">
+                        Belum ada layanan laundry yang tersedia.
+                    </div>
+                @endforelse
             </div>
+            <p id="emptyCategoryMessage" class="hidden text-center text-gray-600 bg-white p-6 rounded-xl border mt-4">Belum ada layanan pada kategori ini.</p>
 
             <div class="mt-8 text-right">
-                <button type="button" id="review-order" onclick="showConfirmationModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl shadow-md transition">Pesan Sekarang</button>
+                <button type="button" id="review-order" onclick="showConfirmationModal()" class="bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 text-white font-bold px-8 py-3 rounded-xl shadow-md transition">Pesan Sekarang</button>
             </div>
 
             <div id="confirmModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
@@ -1394,16 +1432,16 @@ Perhatikan JavaScript di halaman ini hanya menampilkan estimasi total agar nyama
                         <div class="flex justify-between"><span class="font-semibold">WhatsApp:</span> <span id="modalWhatsapp" class="text-gray-900 font-bold"></span></div>
                     </div>
                     <div class="border-t border-b py-3 mb-4 max-h-48 overflow-y-auto">
-                        <p class="font-semibold text-xs text-gray-400 uppercase mb-2">Rincian Item</p>
+                        <p class="font-semibold text-xs text-gray-600 uppercase mb-2">Rincian Item</p>
                         <ul id="modalItemList" class="space-y-2 text-sm"></ul>
                     </div>
                     <div class="flex justify-between items-center text-lg font-bold text-gray-800 mb-6">
                         <span>Total Pembayaran:</span>
-                        <span id="modalTotalPrice" class="text-green-600 text-xl">Rp 0</span>
+                        <span id="modalTotalPrice" class="text-green-700 text-xl">Rp 0</span>
                     </div>
                     <div class="flex gap-3">
-                        <button type="button" id="cancel-confirmation" onclick="closeConfirmationModal()" class="w-1/2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 rounded-xl transition">Batal</button>
-                        <button type="submit" class="w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl shadow transition">Ya, Kirim Pesanan</button>
+                        <button type="button" id="cancel-confirmation" onclick="closeConfirmationModal()" class="w-1/2 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-600 text-gray-800 font-semibold py-2.5 rounded-xl transition">Batal</button>
+                        <button type="submit" class="w-1/2 bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-800 text-white font-bold py-2.5 rounded-xl shadow transition">Ya, Kirim Pesanan</button>
                     </div>
                 </div>
             </div>
@@ -1413,14 +1451,23 @@ Perhatikan JavaScript di halaman ini hanya menampilkan estimasi total agar nyama
     <script>
         function filterCategory(category, element) {
             document.querySelectorAll('.btn-category').forEach(btn => {
-                btn.className = "btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-600 hover:bg-gray-200 border";
+                btn.className = "btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-700 hover:bg-gray-200 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2";
             });
-            element.className = "btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-blue-600 text-white shadow-md";
+            element.className = "btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-blue-600 text-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2";
             const cards = document.querySelectorAll('.service-card');
+            let visibleCount = 0;
             cards.forEach(card => {
                 const cardCategory = card.getAttribute('data-category');
-                card.style.display = (category === 'all' || cardCategory === category) ? 'flex' : 'none';
+                const isVisible = category === 'all' || cardCategory === category;
+                card.style.display = isVisible ? 'flex' : 'none';
+                if (isVisible) {
+                    visibleCount++;
+                }
             });
+            const emptyCategoryMessage = document.getElementById('emptyCategoryMessage');
+            if (emptyCategoryMessage && cards.length > 0) {
+                emptyCategoryMessage.classList.toggle('hidden', visibleCount > 0);
+            }
         }
 
         function showConfirmationModal() {
@@ -1468,6 +1515,12 @@ Perhatikan JavaScript di halaman ini hanya menampilkan estimasi total agar nyama
             document.getElementById('review-order').focus();
             modal.classList.add('hidden');
         }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !document.getElementById('confirmModal').classList.contains('hidden')) {
+                closeConfirmationModal();
+            }
+        });
     </script>
 </body>
 </html>
@@ -1483,7 +1536,7 @@ Perhatikan JavaScript di halaman ini hanya menampilkan estimasi total agar nyama
 2. Ganti seluruh isinya menggunakan kode di bawah (atau lewat "Pratinjau sisipkan kode"), lalu simpan (Ctrl+S).
 
 **Tujuannya:**
-Menghadirkan halaman operasional admin di /dashboard dan /admin/dashboard: tombol cepat Kelola Layanan Laundry, kartu ringkasan metrik (Total Pesanan, Dalam Antrean, Selesai), serta tabel pesanan masuk dengan rincian item cucian dan form PATCH ubah status per baris pesanan.
+Menghadirkan halaman operasional admin di /dashboard dan /admin/dashboard: tombol cepat Kelola Layanan dan Lihat Layanan Customer, serta tabel pesanan masuk (# ID, Pelanggan, WhatsApp, Rincian Pesanan, Total Harga, Status, Aksi Status) lengkap dengan status kosong (empty state) dan form PATCH ubah status per baris pesanan.
 
 **Perhatian:**
 Setiap form ubah status pesanan memakai method POST + @method('PATCH') ke route('admin.orders.updateStatus', $order) dan menyertakan @csrf.
@@ -1496,10 +1549,10 @@ Setiap form ubah status pesanan memakai method POST + @method('PATCH') ke route(
                 {{ __('Daftar Pesanan Masuk') }}
             </h2>
             <div class="flex items-center gap-3">
-                <a href="{{ route('services.index') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 shadow-sm transition">
+                <a href="{{ route('services.index') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-sm transition">
                     Kelola Layanan
                 </a>
-                <a href="{{ route('customer.index') }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 shadow-sm transition">
+                <a href="{{ route('customer.index') }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 shadow-sm transition">
                     Lihat Layanan Customer
                 </a>
             </div>
@@ -1544,12 +1597,12 @@ Setiap form ubah status pesanan memakai method POST + @method('PATCH') ke route(
                                                 <li>
                                                     <strong>{{ $detail->service->service_name ?? 'Layanan' }}</strong>
                                                     {{ $detail->qty_or_weight }} {{ $detail->service->unit_type ?? '' }}
-                                                    <span class="text-xs text-gray-400">(Rp {{ number_format($detail->subtotal) }})</span>
+                                                    <span class="text-xs text-gray-600">(Rp {{ number_format($detail->subtotal) }})</span>
                                                 </li>
                                             @endforeach
                                         </ul>
                                     </td>
-                                    <td class="p-4 font-bold text-green-600">
+                                    <td class="p-4 font-bold text-green-700">
                                         Rp {{ number_format($order->total_price) }}
                                     </td>
                                     <td class="p-4">
@@ -1565,7 +1618,7 @@ Setiap form ubah status pesanan memakai method POST + @method('PATCH') ke route(
                                         <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
                                             @csrf
                                             @method('PATCH')
-                                            <select name="status" aria-label="Status pesanan {{ $order->id }}" onchange="this.form.submit()" class="text-xs border border-gray-300 rounded p-1.5 bg-white shadow-sm font-semibold">
+                                            <select name="status" aria-label="Status pesanan {{ $order->id }}" onchange="this.form.submit()" class="text-xs border border-gray-500 rounded p-1.5 bg-white shadow-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-700">
                                                 @foreach(['Antrean', 'Dicuci', 'Selesai'] as $status)
                                                     <option value="{{ $status }}" @selected($order->status === $status)>{{ $status }}</option>
                                                 @endforeach
@@ -1575,7 +1628,7 @@ Setiap form ubah status pesanan memakai method POST + @method('PATCH') ke route(
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="p-6 text-center text-gray-500">Belum ada pesanan masuk.</td>
+                                    <td colspan="7" class="p-6 text-center text-gray-600">Belum ada pesanan masuk.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -1844,7 +1897,7 @@ Menyesuaikan tampilan navigasi di Blade hanya membantu kenyamanan antarmuka; kea
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-600 bg-white hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition ease-in-out duration-150">
                             <div>{{ Auth::user()->name }}</div>
 
                             <div class="ms-1">
@@ -1876,7 +1929,7 @@ Menyesuaikan tampilan navigasi di Blade hanya membantu kenyamanan antarmuka; kea
 
             <!-- Hamburger -->
             <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                <button @click="open = ! open" aria-label="Menu navigasi" class="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-gray-100 focus:text-gray-700 transition duration-150 ease-in-out">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1928,8 +1981,8 @@ Menyesuaikan tampilan navigasi di Blade hanya membantu kenyamanan antarmuka; kea
 **Kerjakan di sini:**
 1. Jalankan kedua perintah di bawah pada terminal proyek laundry (npm run build mengompilasi semua class Tailwind dari view baru, lalu php artisan serve menyalakan server lokal di http://127.0.0.1:8000).
 2. Lakukan checklist pengujian manual di browser dari awal sampai akhir:
-   a) Halaman publik (/): pastikan 5 layanan awal tampil; uji submit kosong untuk memastikan muncul error; lalu pesan layanan Kg dan Pcs dengan nomor WhatsApp valid (8-15 digit), pastikan muncul estimasi dan notif sukses masuk antrean.
-   b) Register & proteksi non-admin: buka /register, buat akun pelanggan baru, pastikan langsung diarahkan ke /. Lalu coba ketik manual URL /dashboard dan /admin/services di address bar — server WAJIB menolak dengan 403 THIS ACTION IS UNAUTHORIZED.
+   a) Halaman publik (/): pastikan 5 layanan awal tampil; uji submit kosong untuk memastikan muncul error; lalu pesan layanan Kg dan Pcs dengan nomor WhatsApp valid (8-15 digit), tekan Pesan Sekarang untuk memeriksa modal konfirmasi (uji tombol Batal maupun tombol Escape untuk menutupnya), lalu kirim pesanan dan pastikan muncul notif sukses masuk antrean.
+   b) Register & proteksi non-admin: buka /register, buat akun pelanggan baru, pastikan langsung diarahkan ke /. Lalu coba ketik manual URL /dashboard dan /admin/services di address bar: server WAJIB menolak dengan 403 THIS ACTION IS UNAUTHORIZED.
    c) Login admin: logout, lalu masuk di /login memakai email admin@gmail.com dan password password123, pastikan langsung masuk ke /dashboard.
    d) Operasi dashboard & CRUD admin: ubah status pesanan pelanggan tadi dari Antrean -> Dicuci -> Selesai. Buka /admin/services, tambah layanan baru, edit layanan, lalu uji pengaman bisnis (ubah satuan unit_type layanan yang sudah pernah dipesan -> harus ditolak error validasi; coba hapus layanan yang sudah pernah dipesan -> harus ditolak pesan error). Terakhir hapus layanan baru yang belum pernah dipesan -> berhasil.
 

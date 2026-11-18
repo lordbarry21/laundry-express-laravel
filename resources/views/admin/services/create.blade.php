@@ -16,11 +16,11 @@
             @csrf
             <div class="mb-4">
                 <label for="service_name" class="block font-medium mb-1">Nama Layanan</label>
-                <input type="text" id="service_name" name="service_name" value="{{ old('service_name') }}" class="w-full border rounded p-2" required>
+                <input type="text" id="service_name" name="service_name" value="{{ old('service_name') }}" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
             </div>
             <div class="mb-4">
                 <label for="category" class="block font-medium mb-1">Kategori</label>
-                <select id="category" name="category" class="w-full border rounded p-2" required>
+                <select id="category" name="category" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
                     <option value="Kiloan" @selected(old('category') === 'Kiloan')>Kiloan</option>
                     <option value="Satuan" @selected(old('category') === 'Satuan')>Satuan</option>
                     <option value="Express" @selected(old('category') === 'Express')>Express</option>
@@ -28,20 +28,20 @@
             </div>
             <div class="mb-4">
                 <label for="unit_type" class="block font-medium mb-1">Satuan</label>
-                <select id="unit_type" name="unit_type" class="w-full border rounded p-2" required>
+                <select id="unit_type" name="unit_type" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
                     <option value="Kg" @selected(old('unit_type') === 'Kg')>Kg</option>
                     <option value="Pcs" @selected(old('unit_type') === 'Pcs')>Pcs</option>
                 </select>
             </div>
             <div class="mb-4">
                 <label for="price_per_unit" class="block font-medium mb-1">Tarif per Unit (Rp)</label>
-                <input type="number" id="price_per_unit" name="price_per_unit" min="0" max="2147483647" value="{{ old('price_per_unit') }}" class="w-full border rounded p-2" required>
+                <input type="number" id="price_per_unit" name="price_per_unit" min="0" max="2147483647" value="{{ old('price_per_unit') }}" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" required>
             </div>
             <div class="mb-4">
                 <label for="description" class="block font-medium mb-1">Deskripsi</label>
-                <textarea id="description" name="description" class="w-full border rounded p-2" rows="3" required>{{ old('description') }}</textarea>
+                <textarea id="description" name="description" class="w-full border border-gray-500 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-700" rows="3" required>{{ old('description') }}</textarea>
             </div>
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded font-semibold">Simpan Data</button>
+            <button type="submit" class="bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-800 focus:ring-offset-2 text-white px-6 py-2.5 rounded font-semibold">Simpan Data</button>
         </form>
     </div>
 </x-app-layout>

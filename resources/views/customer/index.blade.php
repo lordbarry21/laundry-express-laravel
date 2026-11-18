@@ -11,7 +11,7 @@
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-6">
             <h1 class="text-3xl font-bold text-gray-800">Layanan Laundry</h1>
-            <p class="text-gray-500 text-sm mt-1">Pilih layanan, isi perkiraan berat atau jumlah, lalu masukkan nomor WhatsApp.</p>
+            <p class="text-gray-600 text-sm mt-1">Pilih layanan, isi perkiraan berat atau jumlah, lalu masukkan nomor WhatsApp.</p>
             @guest
                 <a href="{{ route('login') }}" class="mt-2 inline-block text-sm text-blue-700 underline">Admin</a>
             @else
@@ -40,10 +40,10 @@
         @endif
 
         <div class="flex flex-wrap justify-center gap-3 mb-8">
-            <button type="button" onclick="filterCategory('all', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-blue-600 text-white shadow-md">Semua Layanan</button>
-            <button type="button" onclick="filterCategory('Kiloan', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-600 hover:bg-gray-200 border">Kiloan</button>
-            <button type="button" onclick="filterCategory('Satuan', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-600 hover:bg-gray-200 border">Satuan</button>
-            <button type="button" onclick="filterCategory('Express', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-600 hover:bg-gray-200 border">Express</button>
+            <button type="button" onclick="filterCategory('all', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-blue-600 text-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2">Semua Layanan</button>
+            <button type="button" onclick="filterCategory('Kiloan', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-700 hover:bg-gray-200 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2">Kiloan</button>
+            <button type="button" onclick="filterCategory('Satuan', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-700 hover:bg-gray-200 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2">Satuan</button>
+            <button type="button" onclick="filterCategory('Express', this)" class="btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-700 hover:bg-gray-200 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2">Express</button>
         </div>
 
         <form id="orderForm" action="{{ route('customer.checkout') }}" method="POST">
@@ -53,43 +53,48 @@
                 <h2 class="text-lg font-bold text-gray-700 mb-4 pb-2 border-b">1. Informasi Pemesan</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="customer_name" class="block text-sm font-semibold text-gray-600 mb-1">Nama Lengkap</label>
-                        <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" maxlength="255" required placeholder="Masukkan nama pemesan" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label for="customer_name" class="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap</label>
+                        <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" maxlength="255" required placeholder="Masukkan nama pemesan" class="w-full border border-gray-500 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-700 focus:outline-none">
                     </div>
                     <div>
-                        <label for="whatsapp_number" class="block text-sm font-semibold text-gray-600 mb-1">Nomor WhatsApp</label>
-                        <input type="tel" id="whatsapp_number" name="whatsapp_number" required maxlength="16" pattern="\+?[0-9]{8,15}" value="{{ old('whatsapp_number') }}" placeholder="Contoh: 081234567890" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label for="whatsapp_number" class="block text-sm font-semibold text-gray-700 mb-1">Nomor WhatsApp</label>
+                        <input type="tel" id="whatsapp_number" name="whatsapp_number" required maxlength="16" pattern="\+?[0-9]{8,15}" value="{{ old('whatsapp_number') }}" placeholder="Contoh: 081234567890" class="w-full border border-gray-500 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-700 focus:outline-none">
                     </div>
                 </div>
             </div>
 
             <h2 class="text-lg font-bold text-gray-700 mb-4">2. Pilih Layanan</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                @foreach($services as $service)
+                @forelse($services as $service)
                     <div class="service-card bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col justify-between" data-category="{{ $service->category }}">
                         <div>
                             <div class="p-4">
                                 <div class="flex justify-between items-center mb-2">
                                     <span class="text-xs bg-blue-100 text-blue-700 font-semibold px-2.5 py-0.5 rounded">{{ $service->category }}</span>
-                                    <span class="font-bold text-green-600">Rp {{ number_format($service->price_per_unit, 0, ',', '.') }} / {{ $service->unit_type }}</span>
+                                    <span class="font-bold text-green-700">Rp {{ number_format($service->price_per_unit, 0, ',', '.') }} / {{ $service->unit_type }}</span>
                                 </div>
                                 <h3 class="font-bold text-gray-800 text-lg item-name">{{ $service->service_name }}</h3>
-                                <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ $service->description }}</p>
+                                <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ $service->description }}</p>
                             </div>
                         </div>
 
                         <div class="p-4 bg-gray-50 border-t">
-                            <label for="service-{{ $service->id }}" class="block text-xs font-semibold text-gray-600 mb-1">
+                            <label for="service-{{ $service->id }}" class="block text-xs font-semibold text-gray-700 mb-1">
                                 {{ $service->unit_type === 'Kg' ? 'Perkiraan berat (Kg)' : 'Jumlah (Pcs)' }}
                             </label>
-                            <input type="number" id="service-{{ $service->id }}" name="items[{{ $service->id }}]" min="0" step="1" value="{{ old('items.'.$service->id, 0) }}" data-unit="{{ $service->unit_type }}" data-name="{{ $service->service_name }}" data-price="{{ $service->price_per_unit }}" class="item-qty w-full border rounded-lg px-3 py-1.5 text-center font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <input type="number" id="service-{{ $service->id }}" name="items[{{ $service->id }}]" min="0" step="1" value="{{ old('items.'.$service->id, 0) }}" data-unit="{{ $service->unit_type }}" data-name="{{ $service->service_name }}" data-price="{{ $service->price_per_unit }}" class="item-qty w-full border border-gray-500 rounded-lg px-3 py-1.5 text-center font-bold text-gray-700 focus:ring-2 focus:ring-blue-700 focus:outline-none">
                         </div>
                     </div>
-                @endforeach
+                @empty
+                    <div class="md:col-span-3 bg-white p-6 rounded-xl border text-center text-gray-600">
+                        Belum ada layanan laundry yang tersedia.
+                    </div>
+                @endforelse
             </div>
+            <p id="emptyCategoryMessage" class="hidden text-center text-gray-600 bg-white p-6 rounded-xl border mt-4">Belum ada layanan pada kategori ini.</p>
 
             <div class="mt-8 text-right">
-                <button type="button" id="review-order" onclick="showConfirmationModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl shadow-md transition">Pesan Sekarang</button>
+                <button type="button" id="review-order" onclick="showConfirmationModal()" class="bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 text-white font-bold px-8 py-3 rounded-xl shadow-md transition">Pesan Sekarang</button>
             </div>
 
             <div id="confirmModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
@@ -100,16 +105,16 @@
                         <div class="flex justify-between"><span class="font-semibold">WhatsApp:</span> <span id="modalWhatsapp" class="text-gray-900 font-bold"></span></div>
                     </div>
                     <div class="border-t border-b py-3 mb-4 max-h-48 overflow-y-auto">
-                        <p class="font-semibold text-xs text-gray-400 uppercase mb-2">Rincian Item</p>
+                        <p class="font-semibold text-xs text-gray-600 uppercase mb-2">Rincian Item</p>
                         <ul id="modalItemList" class="space-y-2 text-sm"></ul>
                     </div>
                     <div class="flex justify-between items-center text-lg font-bold text-gray-800 mb-6">
                         <span>Total Pembayaran:</span>
-                        <span id="modalTotalPrice" class="text-green-600 text-xl">Rp 0</span>
+                        <span id="modalTotalPrice" class="text-green-700 text-xl">Rp 0</span>
                     </div>
                     <div class="flex gap-3">
-                        <button type="button" id="cancel-confirmation" onclick="closeConfirmationModal()" class="w-1/2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 rounded-xl transition">Batal</button>
-                        <button type="submit" class="w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl shadow transition">Ya, Kirim Pesanan</button>
+                        <button type="button" id="cancel-confirmation" onclick="closeConfirmationModal()" class="w-1/2 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-600 text-gray-800 font-semibold py-2.5 rounded-xl transition">Batal</button>
+                        <button type="submit" class="w-1/2 bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-800 text-white font-bold py-2.5 rounded-xl shadow transition">Ya, Kirim Pesanan</button>
                     </div>
                 </div>
             </div>
@@ -119,14 +124,23 @@
     <script>
         function filterCategory(category, element) {
             document.querySelectorAll('.btn-category').forEach(btn => {
-                btn.className = "btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-600 hover:bg-gray-200 border";
+                btn.className = "btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-white text-gray-700 hover:bg-gray-200 border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2";
             });
-            element.className = "btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-blue-600 text-white shadow-md";
+            element.className = "btn-category px-5 py-2 rounded-full font-semibold text-sm transition bg-blue-600 text-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2";
             const cards = document.querySelectorAll('.service-card');
+            let visibleCount = 0;
             cards.forEach(card => {
                 const cardCategory = card.getAttribute('data-category');
-                card.style.display = (category === 'all' || cardCategory === category) ? 'flex' : 'none';
+                const isVisible = category === 'all' || cardCategory === category;
+                card.style.display = isVisible ? 'flex' : 'none';
+                if (isVisible) {
+                    visibleCount++;
+                }
             });
+            const emptyCategoryMessage = document.getElementById('emptyCategoryMessage');
+            if (emptyCategoryMessage && cards.length > 0) {
+                emptyCategoryMessage.classList.toggle('hidden', visibleCount > 0);
+            }
         }
 
         function showConfirmationModal() {
@@ -174,6 +188,12 @@
             document.getElementById('review-order').focus();
             modal.classList.add('hidden');
         }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !document.getElementById('confirmModal').classList.contains('hidden')) {
+                closeConfirmationModal();
+            }
+        });
     </script>
 </body>
 </html>

@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'),
         ]);
 
-        if ($admin->wasRecentlyCreated) {
+        if (! $admin->is_admin) {
             $admin->is_admin = true;
             $admin->save();
         }
