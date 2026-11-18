@@ -4,28 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderDetail extends Model
 {
     use HasFactory;
 
-    //
-
     protected $table = 'order_details';
 
     protected $guarded = ['id'];
 
-    public function getSubtotalAttribute(): int
+    public function service(): BelongsTo
     {
-        return (int) (($this->price ?? 0) * ($this->quantity ?? 1));
+        return $this->belongsTo(Service::class, 'service_id');
     }
 
-    public function laundryItem()
-    {
-        return $this->belongsTo(LaundryItem::class, 'laundry_item_id');
-    }
-
-    public function order()
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class, 'order_id');
     }

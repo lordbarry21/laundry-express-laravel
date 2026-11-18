@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\LaundryItem;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Models\Service;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,9 +21,9 @@ class OrderDetailFactory extends Factory
     {
         return [
             'order_id' => Order::factory(),
-            'laundry_item_id' => LaundryItem::factory(),
-            'quantity' => 1,
-            'price' => 25000,
+            'service_id' => Service::factory(),
+            'qty_or_weight' => 1,
+            'subtotal' => 25000,
         ];
     }
 }

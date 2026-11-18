@@ -8,23 +8,16 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * Detail Transaksi Pesanan Laundry
      */
     public function up(): void
     {
         Schema::create('order_details', function (Blueprint $table) {
             $table->id();
-            // Foreign Key ke tabel orders
-            $table->foreignId('order_id')
-                ->constrained('orders')
-                ->onDelete('cascade');
-
-            // Foreign Key ke tabel laundry_items
-            $table->foreignId('laundry_item_id')
-                ->constrained('laundry_items')
-                ->onDelete('cascade');
-
-            $table->integer('quantity');
-            $table->integer('price');
+            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
+            $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
+            $table->integer('qty_or_weight');
+            $table->integer('subtotal');
             $table->timestamps();
         });
     }

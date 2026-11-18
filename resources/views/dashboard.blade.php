@@ -5,7 +5,7 @@
                 {{ __('Daftar Pesanan Masuk') }}
             </h2>
             <div class="flex items-center gap-3">
-                <a href="{{ route('laundry_items.index') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 shadow-sm transition">
+                <a href="{{ route('services.index') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 shadow-sm transition">
                     Kelola Layanan
                 </a>
                 <a href="{{ route('customer.index') }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 shadow-sm transition">
@@ -30,7 +30,7 @@
                             <tr>
                                 <th class="p-4 border-b"># ID</th>
                                 <th class="p-4 border-b">Pelanggan</th>
-                                <th class="p-4 border-b">No. Antrean</th>
+                                <th class="p-4 border-b">WhatsApp</th>
                                 <th class="p-4 border-b">Rincian Pesanan</th>
                                 <th class="p-4 border-b">Total Harga</th>
                                 <th class="p-4 border-b">Status</th>
@@ -44,15 +44,15 @@
                                     <td class="p-4 font-medium">{{ $order->customer_name }}</td>
                                     <td class="p-4">
                                         <span class="bg-blue-100 text-blue-800 font-bold px-2.5 py-1 rounded-full text-xs">
-                                            Antrean {{ $order->queue_number }}
+                                            {{ $order->whatsapp_number }}
                                         </span>
                                     </td>
                                     <td class="p-4">
                                         <ul class="list-disc list-inside space-y-1 text-gray-600">
                                             @foreach($order->orderDetails as $detail)
                                                 <li>
-                                                    <strong>{{ $detail->laundryItem->name ?? 'Layanan' }}</strong> 
-                                                    x{{ $detail->quantity }} 
+                                                    <strong>{{ $detail->service->service_name ?? 'Layanan' }}</strong>
+                                                    {{ $detail->qty_or_weight }} {{ $detail->service->unit_type ?? '' }}
                                                     <span class="text-xs text-gray-400">(Rp {{ number_format($detail->subtotal) }})</span>
                                                 </li>
                                             @endforeach
@@ -62,23 +62,23 @@
                                         Rp {{ number_format($order->total_price) }}
                                     </td>
                                     <td class="p-4">
-                                        @if(strtolower($order->status) == 'pending')
-                                            <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-1 rounded">PENDING</span>
-                                        @elseif(strtolower($order->status) == 'completed' || strtolower($order->status) == 'selesai')
-                                            <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded">SELESAI</span>
+                                        @if($order->status === 'Antrean')
+                                            <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-1 rounded">Antrean</span>
+                                        @elseif($order->status === 'Selesai')
+                                            <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded">Selesai</span>
                                         @else
-                                            <span class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded">{{ strtoupper($order->status) }}</span>
+                                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded">{{ $order->status }}</span>
                                         @endif
                                     </td>
                                     <td class="p-4 text-center">
                                         <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
                                             @csrf
                                             @method('PATCH')
-                                            <select name="status" onchange="this.form.submit()" class="text-xs border border-gray-300 rounded p-1.5 bg-white shadow-sm font-semibold">
-                                                <option value="pending" {{ strtolower($order->status) == 'pending' ? 'selected' : '' }}>Pending</option>
-                                                <option value="completed" {{ strtolower($order->status) == 'completed' || strtolower($order->status) == 'selesai' ? 'selected' : '' }}>Selesai / Lunas</option>
-                                                <option value="cancelled" {{ strtolower($order->status) == 'cancelled' || strtolower($order->status) == 'batal' ? 'selected' : '' }}>Batalkan</option>
-                                            </select>  
+                                            <select name="status" aria-label="Status pesanan {{ $order->id }}" onchange="this.form.submit()" class="text-xs border border-gray-300 rounded p-1.5 bg-white shadow-sm font-semibold">
+                                                @foreach(['Antrean', 'Dicuci', 'Selesai'] as $status)
+                                                    <option value="{{ $status }}" @selected($order->status === $status)>{{ $status }}</option>
+                                                @endforeach
+                                            </select>
                                         </form>
                                     </td>
                                 </tr>

@@ -28,6 +28,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        if (! $request->user()->can('manage-laundry')) {
+            $request->session()->forget('url.intended');
+
+            return redirect()->route('customer.index');
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

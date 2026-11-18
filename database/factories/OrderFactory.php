@@ -19,9 +19,9 @@ class OrderFactory extends Factory
     {
         return [
             'customer_name' => fake()->name(),
-            'queue_number' => '5',
+            'whatsapp_number' => '081234567890',
             'total_price' => 25000,
-            'status' => 'pending',
+            'status' => 'Antrean',
         ];
     }
 }

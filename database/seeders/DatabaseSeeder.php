@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Service;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -16,16 +17,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Buat User Admin Default
-        User::create([
+        $admin = User::firstOrCreate(['email' => 'admin@gmail.com'], [
             'name' => 'Admin Laundry',
-            'email' => 'admin@gmail.com',
             'password' => Hash::make('password123'),
         ]);
 
-        // 2. Panggil Seeder Layanan
-        $this->call([
-            LaundryItemSeeder::class,
-        ]);
+        if ($admin->wasRecentlyCreated) {
+            $admin->is_admin = true;
+            $admin->save();
+        }
+
+        if (! Service::exists()) {
+            $this->call(ServiceSeeder::class);
+        }
     }
 }

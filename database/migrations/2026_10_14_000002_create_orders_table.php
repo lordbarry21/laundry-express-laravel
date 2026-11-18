@@ -8,16 +8,16 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * Header Transaksi Pesanan Laundry
      */
     public function up(): void
     {
-        Schema::create('laundry_items', function (Blueprint $table) {
+        Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->enum('category', ['Cuci', 'Setrika', 'Paket']);
-            $table->integer('price');
-            $table->text('description');
-            $table->string('image')->nullable(); // Boleh kosong/null
+            $table->string('customer_name');
+            $table->string('whatsapp_number');
+            $table->integer('total_price');
+            $table->enum('status', ['Antrean', 'Dicuci', 'Selesai'])->default('Antrean');
             $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('laundry_items');
+        Schema::dropIfExists('orders');
     }
 };

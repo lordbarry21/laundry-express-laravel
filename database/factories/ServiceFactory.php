@@ -2,13 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\LaundryItem;
+use App\Models\Service;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<LaundryItem>
+ * @extends Factory<Service>
  */
-class LaundryItemFactory extends Factory
+class ServiceFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -18,11 +18,11 @@ class LaundryItemFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->words(3, true),
-            'category' => 'Cuci',
-            'price' => 25000,
+            'service_name' => fake()->words(3, true),
+            'category' => 'Kiloan',
+            'unit_type' => 'Kg',
+            'price_per_unit' => 25000,
             'description' => 'Layanan cuci baju reguler.',
-            'image' => null,
         ];
     }
 }

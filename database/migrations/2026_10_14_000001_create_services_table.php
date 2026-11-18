@@ -8,15 +8,17 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * Master Layanan Laundry
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->string('customer_name');
-            $table->string('queue_number'); // Bisa Integer/Varchar (disarankan string/varchar)
-            $table->integer('total_price');
-            $table->string('status')->default('Pending');
+            $table->string('service_name');
+            $table->enum('category', ['Kiloan', 'Satuan', 'Express']);
+            $table->integer('price_per_unit');
+            $table->enum('unit_type', ['Kg', 'Pcs']);
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::dropIfExists('services');
     }
 };
